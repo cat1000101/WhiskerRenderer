@@ -16,6 +16,6 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) Dosis-VariableFont_wght.ttf
 
 .PHONY: clean run
