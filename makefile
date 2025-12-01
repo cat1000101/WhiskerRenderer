@@ -2,14 +2,19 @@ CC = gcc
 CFLAGS = -Wall -Werror
 
 SRCS = src/main.c
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)
 
-TARGET = WhiskerRenderer
+BUILD_DIR = build
+
+TARGET = $(BUILD_DIR)/WhiskerRenderer
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^
 
-%.o: %.c
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+$(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
