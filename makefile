@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror
+CFLAGS = -Wall -Werror -Iinclude
 
 SRCS = src/main.c
 OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)

@@ -1,5 +1,8 @@
 #include <stdio.h>
 
+#include "parser.h"
+#include "renderer.h"
+
 void usage(const char* name) {
     printf("usage:\n%s fontFile.ttf\n",name);
 }
@@ -20,13 +23,15 @@ FILE* parseArgs(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    FILE* font = parseArgs(argc,argv);
-    if (!font) {
+    FILE* fontFile = parseArgs(argc,argv);
+    if (!fontFile) {
         return 1;
     }
 
+    Font* font = parseFont(fontFile);
     printf("render time\n");
+    int success = drawChar(font, 'a');
 
-    fclose(font);
+    fclose(fontFile);
     return 0;
 }
