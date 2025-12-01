@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Iinclude
 
-SRCS = src/main.c
+SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)
 
 BUILD_DIR = build

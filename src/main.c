@@ -33,5 +33,5 @@ int main(int argc, char *argv[]) {
     int success = drawChar(font, 'a');
 
     fclose(fontFile);
-    return 0;
+    return success;
 }
