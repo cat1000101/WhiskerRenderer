@@ -4,12 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef uint16_t shortFrac; // 16-bit signed fraction
-typedef uint32_t Fixed;     // 16.16-bit signed fixed-point number
-typedef int16_t FWord;      // 16-bit signed integer that describes a quantity in FUnits, the smallest measurable distance in em space.
-typedef uint16_t uFWord;    // 16-bit unsigned integer that describes a quantity in FUnits, the smallest measurable distance in em space.
-typedef uint16_t F2Dot14;   // 16-bit signed fixed number with the low 14 bits representing fraction.
-typedef uint16_t longDateTime;
+#define big16ToLittle16(x) ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8)
+#define big32ToLittle32(x) (big16ToLittle16(x & 0xFFFF) << 16 | big16ToLittle16((x & 0xFFFF0000) >> 16))
 
 typedef struct {
     char *name;
@@ -39,6 +35,14 @@ typedef struct {
 // 'maxp'	maximum profile
 // 'name'	naming
 // 'post'	PostScript
+
+typedef uint16_t shortFrac; // 16-bit signed fraction
+typedef uint32_t Fixed;     // 16.16-bit signed fixed-point number
+typedef int16_t FWord;      // 16-bit signed integer that describes a quantity in FUnits, the smallest measurable distance in em space.
+typedef uint16_t uFWord;    // 16-bit unsigned integer that describes a quantity in FUnits, the smallest measurable distance in em space.
+typedef uint16_t F2Dot14;   // 16-bit signed fixed number with the low 14 bits representing fraction.
+typedef uint16_t longDateTime;
+
 typedef struct {
     Fixed version;               // 0x00010000 if (version 1.0)
     Fixed fontRevision;          // set by font manufacturer
