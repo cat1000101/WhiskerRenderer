@@ -9,7 +9,7 @@
 
 typedef struct {
     char *name;
-} Font;
+} W_Font;
 
 typedef struct {
     uint32_t scalerType;
@@ -65,6 +65,6 @@ typedef struct {
 
 uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable);
 
-Font *parseFont(FILE *fontFile);
+W_Font *parseFont(FILE *fontFile);
 
 #endif

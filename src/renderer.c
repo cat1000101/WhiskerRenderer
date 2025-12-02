@@ -1,5 +1,5 @@
 #include "renderer.h"
 
-int drawChar(Font *font, char character) {
+int drawChar(W_Font *font, char character) {
     return 0;
 }

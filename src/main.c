@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    Font *font = parseFont(fontFile);
+    W_Font *font = parseFont(fontFile);
     printf("render time\n");
     int success = drawChar(font, 'a');
 

@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Iinclude
+CFLAGS = -Wall -Werror -Iinclude -L/usr/lib64 -I/usr/include
+LDFLAGS = -lraylib
 
 SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)
@@ -9,7 +10,7 @@ BUILD_DIR = build
 TARGET = $(BUILD_DIR)/WhiskerRenderer
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
