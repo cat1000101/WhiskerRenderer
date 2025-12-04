@@ -6,12 +6,33 @@
 
 #include "utils.h"
 
-#define big16ToLittle16(x) ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8)
-#define big32ToLittle32(x) (big16ToLittle16(x & 0xFFFF) << 16 | big16ToLittle16((x & 0xFFFF0000) >> 16))
+typedef struct {
+    uint8_t x, y;
+} ShortVec2;
+
+typedef struct {
+    uint16_t x, y;
+} Vec2;
 
 typedef struct {
     char *name;
+
+    struct {
+        uint8_t indexToLocFormat : 1;
+    } flags;
+
+    struct {
+        struct {
+            Vec2 min, max;
+        } boundingBox;
+    } glyfInfo;
+
 } W_Font;
+
+typedef struct {
+    mappedFile fontFile;
+    uint16_t numTables;
+} W_Parser;
 
 typedef struct {
     uint32_t scalerType;
@@ -64,8 +85,6 @@ typedef struct {
     int16_t indexToLocFormat;    // 0 for short offsets, 1 for long
     int16_t glyphDataFormat;     // 0 for current format
 } Head;
-
-uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable);
 
 W_Font *parseFont(mappedFile fontFile);
 
