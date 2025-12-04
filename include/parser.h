@@ -65,6 +65,6 @@ typedef struct {
 
 uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable);
 
-W_Font *parseFont(FILE *fontFile);
+W_Font *parseFont(char *fontFile);
 
 #endif

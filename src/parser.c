@@ -9,7 +9,7 @@ uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     return sum;
 }
 
-W_Font *parseFont(FILE *fontFile) {
+W_Font *parseFont(char *fontFile) {
     const int screenWidth = 800;
     const int screenHeight = 600;
     InitWindow(screenWidth, screenHeight, "WhiskerRenderer");
