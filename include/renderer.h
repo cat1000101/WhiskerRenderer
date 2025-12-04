@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-int drawChar(W_Font *font, char character);
+int drawString(W_Font *font, char *character);
 
 #endif

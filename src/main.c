@@ -9,14 +9,13 @@ int main(int argc, char *argv[]) {
     int fontFile = parseArgs(argc, argv);
     if (fontFile == -1) return 1;
 
-    size_t fontSize = 0;
-    char *fontMapped = mapFile(fontFile, &fontSize);
-    if (!fontMapped) return 2;
+    mappedFile fontMapped = mapFile(fontFile);
+    if (!fontMapped.data) return 2;
 
     W_Font *font = parseFont(fontMapped);
     printf("render time\n");
-    int success = drawChar(font, 'a');
+    int success = drawString(font, "meow");
 
-    munmap(fontMapped,fontSize);
+    munmap(fontMapped.data,fontMapped.size);
     return success;
 }

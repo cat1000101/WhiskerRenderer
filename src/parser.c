@@ -1,5 +1,7 @@
-#include "parser.h"
 #include "raylib.h"
+
+#include "parser.h"
+#include "utils.h"
 
 uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     uint32_t sum = 0;
@@ -9,7 +11,7 @@ uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     return sum;
 }
 
-W_Font *parseFont(char *fontFile) {
+W_Font *parseFont(mappedFile fontFile) {
     const int screenWidth = 800;
     const int screenHeight = 600;
     InitWindow(screenWidth, screenHeight, "WhiskerRenderer");

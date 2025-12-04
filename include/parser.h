@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "utils.h"
+
 #define big16ToLittle16(x) ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8)
 #define big32ToLittle32(x) (big16ToLittle16(x & 0xFFFF) << 16 | big16ToLittle16((x & 0xFFFF0000) >> 16))
 
@@ -65,6 +67,6 @@ typedef struct {
 
 uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable);
 
-W_Font *parseFont(char *fontFile);
+W_Font *parseFont(mappedFile fontFile);
 
 #endif

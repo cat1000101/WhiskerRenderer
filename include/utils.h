@@ -4,12 +4,12 @@
 #include <unistd.h>
 
 typedef struct {
-    char* data;
+    char *data;
     size_t size;
 } mappedFile;
 
 void usage(const char *name);
 int parseArgs(int argc, char *argv[]);
-char *mapFile(int fd, size_t *setSize);
+mappedFile mapFile(int fd);
 
 #endif

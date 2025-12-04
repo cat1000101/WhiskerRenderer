@@ -1,9 +1,8 @@
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 #include "utils.h"
-
 
 void usage(const char *name) {
     printf("usage:\n%s fontFile.ttf\n", name);
@@ -24,26 +23,25 @@ int parseArgs(int argc, char *argv[]) {
     return fd;
 }
 
-char *mapFile(int fd, size_t *setSize) {
+mappedFile mapFile(int fd) {
     int fileSize = lseek(fd, 0, SEEK_END);
     if (fileSize == -1) {
         perror("seeking file size error");
         close(fd);
-        return NULL;
+        return (mappedFile){NULL, 0};
     }
     int lseekError = lseek(fd, 0, SEEK_SET);
     if (lseekError == -1) {
         perror("seek reseting to start of file error");
         close(fd);
-        return NULL;
+        return (mappedFile){NULL, 0};
     }
 
     char *mapped = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
     if (mapped == MAP_FAILED) {
         perror("mapping file error");
-        return NULL;
+        return (mappedFile){NULL, 0};
     }
-    *setSize = fileSize;
-    return mapped;
+    return (mappedFile){mapped, fileSize};
 }
