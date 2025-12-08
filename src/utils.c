@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <stdint.h>
 
 #include "utils.h"
 
@@ -30,11 +31,15 @@ mappedFile mapFile(int fd) {
         close(fd);
         return (mappedFile){NULL, 0};
     }
-    char *mapped = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
+    uint8_t *mapped = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
     if (mapped == MAP_FAILED) {
         perror("mapping file error");
         return (mappedFile){NULL, 0};
     }
     return (mappedFile){mapped, fileSize};
+}
+
+void unmapFile(mappedFile mf) {
+    munmap(mf.data, mf.size);
 }

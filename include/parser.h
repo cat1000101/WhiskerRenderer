@@ -15,26 +15,6 @@ typedef struct {
 } Vec2;
 
 typedef struct {
-    char *name;
-
-    struct {
-        uint8_t indexToLocFormat : 1;
-    } flags;
-
-    struct {
-        struct {
-            Vec2 min, max;
-        } boundingBox;
-    } glyfInfo;
-
-} W_Font;
-
-typedef struct {
-    mappedFile fontFile;
-    uint16_t numTables;
-} W_Parser;
-
-typedef struct {
     uint32_t scalerType;
     uint16_t numTables;
     uint16_t searchRange;
@@ -56,15 +36,15 @@ typedef struct {
 // 'hmtx'	horizontal metrics
 // 'loca'	index to location
 // 'maxp'	maximum profile
-// 'name'	naming
-// 'post'	PostScript
+// 'name'	naming - not needed
+// 'post'	PostScript - not needed
 
 typedef uint16_t shortFrac; // 16-bit signed fraction
 typedef uint32_t Fixed;     // 16.16-bit signed fixed-point number
 typedef int16_t FWord;      // 16-bit signed integer that describes a quantity in FUnits, the smallest measurable distance in em space.
 typedef uint16_t uFWord;    // 16-bit unsigned integer that describes a quantity in FUnits, the smallest measurable distance in em space.
 typedef uint16_t F2Dot14;   // 16-bit signed fixed number with the low 14 bits representing fraction.
-typedef uint16_t longDateTime;
+typedef int64_t longDateTime;
 
 typedef struct {
     Fixed version;               // 0x00010000 if (version 1.0)
@@ -85,6 +65,83 @@ typedef struct {
     int16_t indexToLocFormat;    // 0 for short offsets, 1 for long
     int16_t glyphDataFormat;     // 0 for current format
 } Head;
+
+typedef struct {
+    Fixed version;                  // 0x00010000 (1.0)
+    uint16_t numGlyphs;             // the number of glyphs in the font
+    uint16_t maxPoints;             // points in non-compound glyph
+    uint16_t maxContours;           // contours in non-compound glyph
+    uint16_t maxComponentPoints;    // points in compound glyph
+    uint16_t maxComponentContours;  // contours in compound glyph
+    uint16_t maxZones;              // set to 2
+    uint16_t maxTwilightPoints;     // points used in Twilight Zone (Z0)
+    uint16_t maxStorage;            // number of Storage Area locations
+    uint16_t maxFunctionDefs;       // number of FDEFs
+    uint16_t maxInstructionDefs;    // number of IDEFs
+    uint16_t maxStackElements;      // maximum stack depth
+    uint16_t maxSizeOfInstructions; // byte count for glyph instructions
+    uint16_t maxComponentElements;  // number of glyphs referenced at top level
+    uint16_t maxComponentDepth;     // levels of recursion, set to 0 if font has only simple glyphs
+} Maxp;
+
+typedef struct {
+    Fixed version;                // 0x00010000 (1.0)
+    FWord ascent;                 // Distance from baseline of highest ascender
+    FWord descent;                // Distance from baseline of lowest descender
+    FWord lineGap;                // typographic line gap
+    uFWord advanceWidthMax;       // must be consistent with horizontal metrics
+    FWord minLeftSideBearing;     // must be consistent with horizontal metrics
+    FWord minRightSideBearing;    // must be consistent with horizontal metrics
+    FWord xMaxExtent;             // max(lsb + (xMax-xMin))
+    int16_t caretSlopeRise;       // used to calculate the slope of the caret (rise/run) set to 1 for vertical caret
+    int16_t caretSlopeRun;        // 0 for vertical
+    FWord caretOffset;            // set value to 0 for non-slanted fonts
+    int16_t reserved1;            // set value to 0
+    int16_t reserved2;            // set value to 0
+    int16_t reserved3;            // set value to 0
+    int16_t reserved4;            // set value to 0
+    int16_t metricDataFormat;     // 0 for current format
+    uint16_t numOfLongHorMetrics; // number of advance widths in metrics table
+} Hhea;
+
+typedef struct {
+    struct {
+        uint16_t advanceWidth;
+        int16_t leftSideBearing;
+    } *hMetrics;
+    size_t hMetricsLen;        // numOfLongHorMetrics
+    size_t leftSideBearingLen; // number of entries = total number of glyphs minus numOfLongHorMetrics
+} Hmtx;
+
+typedef struct {
+    union {
+        uint16_t *shortOffsets;
+        uint32_t *longOffsets;
+    } offsets;
+    size_t len;
+} Loca;
+
+typedef struct {
+    char *name;
+} W_Font;
+
+typedef struct {
+    mappedFile fontFile;
+    uint16_t numTables;
+    struct {
+        Head head;
+        Maxp maxp;
+        Loca loca;
+        Hhea Hhea;
+        Hmtx hmtx;
+    } tables;
+} W_Parser;
+
+Head headFromTD(W_Parser parser, TableDirectory headTD);
+Maxp maxpFromTD(W_Parser parser, TableDirectory maxpTD);
+Hhea hheaFromTD(W_Parser parser, TableDirectory hheaTD);
+Hmtx hmtxFromTD(W_Parser parser, TableDirectory hmtxTD);
+Loca locaFromTD(W_Parser parser, TableDirectory locaTD);
 
 W_Font *parseFont(mappedFile fontFile);
 

@@ -17,6 +17,6 @@ int main(int argc, char *argv[]) {
     printf("render time\n");
     int success = drawString(font, "meow");
 
-    munmap(fontMapped.data, fontMapped.size);
+    unmapFile(fontMapped);
     return success;
 }
