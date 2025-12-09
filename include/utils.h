@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define UNUSED(x) (void)(x)
+
 #define SWAP_ENDIAN_16(x) (((uint16_t)(x) & 0xFF00) >> 8 | ((uint16_t)(x) & 0x00FF) << 8)
 #define SWAP_ENDIAN_32(x) (SWAP_ENDIAN_16((uint32_t)(x) & 0xFFFF) << 16 | SWAP_ENDIAN_16(((uint32_t)(x) & 0xFFFF0000) >> 16))
 

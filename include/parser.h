@@ -132,16 +132,10 @@ typedef struct {
         Head head;
         Maxp maxp;
         Loca loca;
-        Hhea Hhea;
+        Hhea hhea;
         Hmtx hmtx;
     } tables;
 } W_Parser;
-
-Head headFromTD(W_Parser parser, TableDirectory headTD);
-Maxp maxpFromTD(W_Parser parser, TableDirectory maxpTD);
-Hhea hheaFromTD(W_Parser parser, TableDirectory hheaTD);
-Hmtx hmtxFromTD(W_Parser parser, TableDirectory hmtxTD);
-Loca locaFromTD(W_Parser parser, TableDirectory locaTD);
 
 W_Font *parseFont(mappedFile fontFile);
 

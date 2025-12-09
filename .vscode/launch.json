@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug WhiskerRenderer",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/WhiskerRenderer",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "preLaunchTask": "make build",
+            "stopAtEntry": false,
+            "args": ["./Dosis-VariableFont_wght.ttf"],
+            "setupCommands": [
+                { "text": "-enable-pretty-printing" }
+            ]
+        }
+    ]
+}

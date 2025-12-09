@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Iinclude -L/usr/lib64 -I/usr/include
+CFLAGS = -g -Wall -Werror -Iinclude -L/usr/lib64 -I/usr/include
 LDFLAGS = -lraylib
 
 SRCS = $(wildcard src/*.c)
