@@ -5,9 +5,17 @@
 #include <unistd.h>
 
 #define UNUSED(x) (void)(x)
+// used for structs
+#define IS_ZERO(x) ({                    \
+    uint8_t _zeros[sizeof(x)] = {0};     \
+    memcmp(&x, &_zeros, sizeof(x)) == 0; \
+})
 
-#define SWAP_ENDIAN_16(x) (((uint16_t)(x) & 0xFF00) >> 8 | ((uint16_t)(x) & 0x00FF) << 8)
-#define SWAP_ENDIAN_32(x) (SWAP_ENDIAN_16((uint32_t)(x) & 0xFFFF) << 16 | SWAP_ENDIAN_16(((uint32_t)(x) & 0xFFFF0000) >> 16))
+// #define SWAP_ENDIAN_16(x) (((uint16_t)(x) & 0xFF00) >> 8 | ((uint16_t)(x) & 0x00FF) << 8)
+// #define SWAP_ENDIAN_32(x) (SWAP_ENDIAN_16((uint32_t)(x) & 0xFFFF) << 16 | SWAP_ENDIAN_16(((uint32_t)(x) & 0xFFFF0000) >> 16))
+
+#define SWAP_ENDIAN_16(x) __builtin_bswap16(x)
+#define SWAP_ENDIAN_32(x) __builtin_bswap32(x)
 
 #define READ_TYPE_ENDIAN(type)                                                     \
     static inline type read_##type##_endian(void *ptr) {                           \
@@ -26,6 +34,17 @@ READ_TYPE_ENDIAN(uint16_t)
 READ_TYPE_ENDIAN(int16_t)
 READ_TYPE_ENDIAN(uint32_t)
 READ_TYPE_ENDIAN(int32_t)
+
+#define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
+
+#define SAFE_MALLOC(size) ({  \
+    void *ptr = malloc(size); \
+    if (!ptr) {               \
+        perror(__func__);     \
+        exit(EXIT_FAILURE);   \
+    }                         \
+    ptr;                      \
+})
 
 #define CREATE_VEC(name, type)                                   \
     typedef struct {                                             \

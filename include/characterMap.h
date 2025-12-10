@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef CHARACTER_MAP_H
+#define CHARACTER_MAP_H
 
 #include <stdint.h>
 
@@ -66,5 +66,7 @@ typedef struct {
     uint16_t numberSubtables; // Number of encoding subtables
     CmapSubtable *subtables;
 } Cmap;
+
+Cmap cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
 
 #endif

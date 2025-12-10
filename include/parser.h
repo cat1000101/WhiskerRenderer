@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// #include "characterMap.h"
 #include "utils.h"
 
 typedef struct {
@@ -130,6 +131,7 @@ typedef struct {
     uint16_t numTables;
     struct {
         Head head;
+        // Cmap cmap;
         Maxp maxp;
         Loca loca;
         Hhea hhea;

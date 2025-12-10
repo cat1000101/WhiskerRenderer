@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 
+// #include "characterMap.h"
 #include "parser.h"
 #include "utils.h"
 
@@ -83,12 +84,12 @@ Loca locaFromTD(W_Parser *parser, TableDirectory locaTD) {
     returnTable.len = parser->tables.maxp.numGlyphs;
     uint8_t *tempView = &parser->fontFile.data[locaTD.offset];
     if (parser->tables.head.indexToLocFormat == 0) {
-        returnTable.offsets.shortOffsets = malloc(sizeof(returnTable.offsets.shortOffsets) * returnTable.len);
+        returnTable.offsets.shortOffsets = SAFE_MALLOC(sizeof(returnTable.offsets.shortOffsets) * returnTable.len);
         for (i = 0; i <= returnTable.len; i++) {
             returnTable.offsets.shortOffsets[i] = read_uint16_t_endian(tempView + i * sizeof(returnTable.offsets.shortOffsets));
         }
     } else {
-        returnTable.offsets.longOffsets = malloc(sizeof(returnTable.offsets.longOffsets) * returnTable.len);
+        returnTable.offsets.longOffsets = SAFE_MALLOC(sizeof(returnTable.offsets.longOffsets) * returnTable.len);
         for (i = 0; i <= returnTable.len; i++) {
             returnTable.offsets.longOffsets[i] = read_uint32_t_endian(tempView + i * sizeof(returnTable.offsets.longOffsets));
         }
@@ -103,11 +104,7 @@ Hmtx hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     returnTable.hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
     returnTable.leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
 
-    returnTable.hMetrics = malloc(returnTable.hMetricsLen * sizeof(returnTable.hMetrics));
-    if (!returnTable.hMetrics) {
-        perror("hmtxFromBe");
-        exit(1);
-    }
+    returnTable.hMetrics = SAFE_MALLOC(returnTable.hMetricsLen * sizeof(returnTable.hMetrics));
     for (i = 0; i < returnTable.hMetricsLen; i++) {
         returnTable.hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
         returnTable.hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
@@ -138,33 +135,46 @@ uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     return sum;
 }
 
+TableDirectory getTableDirectoryAt(W_Parser *parser, size_t offset) {
+    TableDirectory table = {0};
+    uint8_t *rawTable = &parser->fontFile.data[sizeof(OffsetSubTable) + offset];
+
+    table.tag = *(uint32_t *)(&rawTable[0]);
+    table.checkSum = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, checkSum)]);
+    table.offset = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, offset)]);
+    table.length = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, length)]);
+    if (table.offset + table.length > parser->fontFile.size) {
+        fprintf(stderr, "end of table is after the end of sfnt\n");
+        return (TableDirectory){0};
+    }
+
+    // check the checksum of table, special case is 'head' table where we need to set a value in it to zero(subtracting also works)
+    uint32_t calculatedChecksum = calcTableChecksum((uint32_t *)(&parser->fontFile.data[table.offset]), table.length);
+    if (!memcmp("head", (char *)(&table.tag), 4)) {
+        uint32_t headChecksum = calculatedChecksum - read_uint32_t_endian(&parser->fontFile.data[table.offset + 8]);
+        if (headChecksum != table.checkSum) {
+            fprintf(stderr, "table head invalid checksum 0x%08X when expected 0x%08X\n", headChecksum, table.checkSum);
+            return (TableDirectory){0};
+        }
+    } else if (calculatedChecksum != table.checkSum) {
+        fprintf(stderr, "table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n", (char *)(&table.tag), calculatedChecksum, table.checkSum);
+        return (TableDirectory){0};
+    }
+    return table;
+}
+
 TableDirectory getTableDirectory(W_Parser *parser, char *tag) {
     TableDirectory table = {0};
+    size_t offset = 0;
     TableDirectory *tables = (TableDirectory *)(&parser->fontFile.data[sizeof(OffsetSubTable)]);
     for (size_t i = 0; i < parser->numTables; i++) {
         if (memcmp(&tables[i], tag, 4)) {
             continue;
         }
-        table.tag = tables[i].tag;
-        table.checkSum = SWAP_ENDIAN_32(tables[i].checkSum);
-        table.offset = SWAP_ENDIAN_32(tables[i].offset);
-        table.length = SWAP_ENDIAN_32(tables[i].length);
-        if (table.offset + table.length > parser->fontFile.size) {
-            fprintf(stderr, "end of table is after the end of sfnt\n");
-            return (TableDirectory){0};
-        }
-
-        // check the checksum of table, special case is 'head' table where we need to set a value in it to zero(subtracting also works)
-        uint32_t calculatedChecksum = calcTableChecksum((uint32_t *)(&parser->fontFile.data[table.offset]), table.length);
-        if (!memcmp("head", tag, 4)) {
-            uint32_t headChecksum = calculatedChecksum - read_uint32_t_endian(&parser->fontFile.data[table.offset + 8]);
-            if (headChecksum != table.checkSum) {
-                fprintf(stderr, "table head invalid checksum 0x%08X when expected 0x%08X\n", headChecksum, table.checkSum);
-                return (TableDirectory){0};
-            }
-        } else if (calculatedChecksum != table.checkSum) {
-            fprintf(stderr, "table '%s' invalid checksum 0x%08X when expected 0x%08X\n", tag, calculatedChecksum, table.checkSum);
-            return (TableDirectory){0};
+        offset = (size_t)(&tables[i]) - (size_t)(tables);
+        table = getTableDirectoryAt(parser, offset);
+        if (!table.tag) {
+            fprintf(stderr, "invalid table directory at offset %08zX\n", offset);
         }
         return table;
     }
@@ -173,25 +183,37 @@ TableDirectory getTableDirectory(W_Parser *parser, char *tag) {
 }
 
 int setTables(W_Parser *parser) {
-    TableDirectory head = getTableDirectory(parser, "head");
-    if (!head.tag) return 0;
-    parser->tables.head = headFromTD(parser, head);
+    TableDirectory table = {0};
 
-    TableDirectory maxp = getTableDirectory(parser, "maxp");
-    if (!maxp.tag) return 0;
-    parser->tables.maxp = maxpFromTD(parser, maxp);
+    table = getTableDirectory(parser, "head");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.head = headFromTD(parser, table);
+    if (IS_ZERO(parser->tables.head)) return 0;
 
-    TableDirectory hhea = getTableDirectory(parser, "hhea");
-    if (!hhea.tag) return 0;
-    parser->tables.hhea = hheaFromTD(parser, hhea);
+    table = getTableDirectory(parser, "maxp");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.maxp = maxpFromTD(parser, table);
+    if (IS_ZERO(parser->tables.maxp)) return 0;
 
-    TableDirectory loca = getTableDirectory(parser, "loca");
-    if (!loca.tag) return 0;
-    parser->tables.loca = locaFromTD(parser, loca);
+    table = getTableDirectory(parser, "hhea");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.hhea = hheaFromTD(parser, table);
+    if (IS_ZERO(parser->tables.hhea)) return 0;
 
-    TableDirectory hmtx = getTableDirectory(parser, "hmtx");
-    if (!hmtx.tag) return 0;
-    parser->tables.hmtx = hmtxFromTD(parser, hmtx);
+    table = getTableDirectory(parser, "loca");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.loca = locaFromTD(parser, table);
+    if (IS_ZERO(parser->tables.loca)) return 0;
+
+    table = getTableDirectory(parser, "hmtx");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.hmtx = hmtxFromTD(parser, table);
+    if (IS_ZERO(parser->tables.hmtx)) return 0;
+
+    // table = getTableDirectory(parser, "cmap");
+    // if (IS_ZERO(table)) return 0;
+    // parser->tables.cmap = cmapFromTD(parser, table);
+    // if (IS_ZERO(parser->tables.cmap)) return 0;
 
     return 1;
 }
@@ -224,7 +246,7 @@ W_Parser checkFont(mappedFile fontFile) {
 W_Font *parseFont(mappedFile fontFile) {
     // W_Font font = {0};
     W_Parser parser = checkFont(fontFile);
-    if (!parser.numTables) return NULL;
+    if (IS_ZERO(parser)) return NULL;
 
     if (!setTables(&parser)) return NULL;
 

@@ -5,7 +5,10 @@
             "label": "make build",
             "type": "shell",
             "command": "make -B",
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": "$gcc"
         }
     ]
