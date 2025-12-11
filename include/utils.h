@@ -24,6 +24,11 @@
         abort();                                                                             \
     } while (0)
 #endif
+#define ERROR_OUT(fmt, ...)                                                            \
+    do {                                                                               \
+        fprintf(stderr, "%s:%d: error: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+        return 1;                                                                      \
+    } while (0)
 
 // used for structs
 #define IS_ZERO(x) ({                    \
@@ -37,16 +42,16 @@
 #define SWAP_ENDIAN_16(x) __builtin_bswap16(x)
 #define SWAP_ENDIAN_32(x) __builtin_bswap32(x)
 
-#define READ_TYPE_ENDIAN(type)                                                 \
-    static inline type read_##type##_endian(void *ptr) {                       \
-        if (sizeof(type) == 2) {                                               \
-            return (type)SWAP_ENDIAN_16(*(uint16_t *)(ptr));                   \
-        } else if (sizeof(type) == 4) {                                        \
-            return (type)SWAP_ENDIAN_32(*(uint32_t *)(ptr));                   \
-        } else {                                                               \
-            UNREACHABLE("READ_SIZE_ENDIAN used with undefined size for it\n"); \
-            return 0;                                                          \
-        }                                                                      \
+#define READ_TYPE_ENDIAN(type)                                               \
+    static inline type read_##type##_endian(void *ptr) {                     \
+        if (sizeof(type) == 2) {                                             \
+            return (type)SWAP_ENDIAN_16(*(uint16_t *)(ptr));                 \
+        } else if (sizeof(type) == 4) {                                      \
+            return (type)SWAP_ENDIAN_32(*(uint32_t *)(ptr));                 \
+        } else {                                                             \
+            UNREACHABLE("READ_SIZE_ENDIAN used with undefined size for it"); \
+            return 0;                                                        \
+        }                                                                    \
     }
 
 READ_TYPE_ENDIAN(uint16_t)
@@ -56,6 +61,7 @@ READ_TYPE_ENDIAN(int32_t)
 
 #define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
 
+// it is "safe"
 #define SAFE_MALLOC(size) ({  \
     void *ptr = malloc(size); \
     if (!ptr) {               \
@@ -101,10 +107,10 @@ READ_TYPE_ENDIAN(int32_t)
 typedef struct {
     uint8_t *data;
     size_t size;
-} mappedFile;
+} MappedFile;
 
 void usage(const char *name);
 int parseArgs(int argc, char *argv[]);
-mappedFile mapFile(int fd);
-void unmapFile(mappedFile mf);
+int mapFile(int fd, MappedFile *mappedFile);
+void unmapFile(MappedFile mf);
 #endif

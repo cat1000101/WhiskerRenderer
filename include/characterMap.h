@@ -65,6 +65,6 @@ typedef struct {
     uint32_t offset;             // Offset of the mapping table
 } CmapSubtable;
 
-Cmap cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
+int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result);
 
 #endif

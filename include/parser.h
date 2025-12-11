@@ -124,7 +124,7 @@ typedef struct {
 } W_Font;
 
 typedef struct {
-    mappedFile fontFile;
+    MappedFile fontFile;
     uint16_t numTables;
     struct {
         Head head;
@@ -136,6 +136,6 @@ typedef struct {
     } tables;
 } W_Parser;
 
-W_Font *parseFont(mappedFile fontFile);
+W_Font *parseFont(MappedFile fontFile);
 
 #endif

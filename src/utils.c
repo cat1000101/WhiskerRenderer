@@ -1,7 +1,7 @@
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/mman.h>
-#include <stdint.h>
 
 #include "utils.h"
 
@@ -24,22 +24,23 @@ int parseArgs(int argc, char *argv[]) {
     return fd;
 }
 
-mappedFile mapFile(int fd) {
+int mapFile(int fd, MappedFile *mappedFile) {
     int fileSize = lseek(fd, 0, SEEK_END);
     if (fileSize == -1) {
         perror("seeking file size error");
         close(fd);
-        return (mappedFile){NULL, 0};
+        return 0;
     }
-    uint8_t *mapped = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
+    mappedFile->data = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
+    mappedFile->size = fileSize;
     close(fd);
-    if (mapped == MAP_FAILED) {
+    if (mappedFile->data == MAP_FAILED) {
         perror("mapping file error");
-        return (mappedFile){NULL, 0};
+        return 0;
     }
-    return (mappedFile){mapped, fileSize};
+    return 1;
 }
 
-void unmapFile(mappedFile mf) {
+void unmapFile(MappedFile mf) {
     munmap(mf.data, mf.size);
 }

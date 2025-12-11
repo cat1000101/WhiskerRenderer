@@ -7,13 +7,13 @@
 
 int main(int argc, char *argv[]) {
     int fontFile = parseArgs(argc, argv);
-    if (fontFile == -1) return 1;
+    if (!fontFile) return 1;
 
-    mappedFile fontMapped = mapFile(fontFile);
-    if (!fontMapped.data) return 2;
+    MappedFile fontMapped = (MappedFile){0};
+    if (!mapFile(fontFile, &fontMapped)) return 1;
 
     W_Font *font = parseFont(fontMapped);
-    if (!font) return 3;
+    if (!font) return 1;
     printf("render time\n");
     int success = drawString(font, "meow");
 
