@@ -55,6 +55,16 @@ typedef struct {
     CmapFormat12Group *groups;
 } CmapFormat12;
 
+typedef struct {
+    uint16_t format;
+} IdentifyFormat;
+
+typedef struct {
+    uint16_t platformID;         // Platform identifier
+    uint16_t platformSpecificID; // Platform-specific encoding identifier
+    uint32_t offset;             // Offset of the mapping table
+} CmapSubtable;
+
 Cmap cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
 
 #endif

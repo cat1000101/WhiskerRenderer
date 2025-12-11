@@ -2,10 +2,29 @@
 #define UTILS_H
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #define UNUSED(x) (void)(x)
+#define TODO(message)                                                      \
+    do {                                                                   \
+        fprintf(stderr, "%s:%d: TODO: %s\n", __FILE__, __LINE__, message); \
+        abort();                                                           \
+    } while (0)
+#ifdef NDEBUG
+#define UNREACHABLE(fmt, ...)                                     \
+    do {                                                          \
+        fprintf(stderr, "UNREACHABLE: " fmt "\n", ##__VA_ARGS__); \
+        abort();                                                  \
+    } while (0)
+#else
+#define UNREACHABLE(fmt, ...)                                                                \
+    do {                                                                                     \
+        fprintf(stderr, "%s:%d: UNREACHABLE: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+        abort();                                                                             \
+    } while (0)
+#endif
+
 // used for structs
 #define IS_ZERO(x) ({                    \
     uint8_t _zeros[sizeof(x)] = {0};     \
@@ -18,17 +37,16 @@
 #define SWAP_ENDIAN_16(x) __builtin_bswap16(x)
 #define SWAP_ENDIAN_32(x) __builtin_bswap32(x)
 
-#define READ_TYPE_ENDIAN(type)                                                     \
-    static inline type read_##type##_endian(void *ptr) {                           \
-        if (sizeof(type) == 2) {                                                   \
-            return (type)SWAP_ENDIAN_16(*(uint16_t *)(ptr));                       \
-        } else if (sizeof(type) == 4) {                                            \
-            return (type)SWAP_ENDIAN_32(*(uint32_t *)(ptr));                       \
-        } else {                                                                   \
-            fprintf(stderr, "READ_SIZE_ENDIAN used with undefined size for it\n"); \
-            exit(1);                                                               \
-            return 0;                                                              \
-        }                                                                          \
+#define READ_TYPE_ENDIAN(type)                                                 \
+    static inline type read_##type##_endian(void *ptr) {                       \
+        if (sizeof(type) == 2) {                                               \
+            return (type)SWAP_ENDIAN_16(*(uint16_t *)(ptr));                   \
+        } else if (sizeof(type) == 4) {                                        \
+            return (type)SWAP_ENDIAN_32(*(uint32_t *)(ptr));                   \
+        } else {                                                               \
+            UNREACHABLE("READ_SIZE_ENDIAN used with undefined size for it\n"); \
+            return 0;                                                          \
+        }                                                                      \
     }
 
 READ_TYPE_ENDIAN(uint16_t)
@@ -42,7 +60,7 @@ READ_TYPE_ENDIAN(int32_t)
     void *ptr = malloc(size); \
     if (!ptr) {               \
         perror(__func__);     \
-        exit(EXIT_FAILURE);   \
+        abort();              \
     }                         \
     ptr;                      \
 })
@@ -62,11 +80,11 @@ READ_TYPE_ENDIAN(int32_t)
                                                                  \
     static void name##_push(name *v, type value) {               \
         if (v->len == v->cap) {                                  \
-            v->cap = v->cap ? v->cap * 2 : 4;                    \
+            v->cap = v->cap ? v->cap * 2 : 16;                   \
             type *tmp = realloc(v->data, v->cap * sizeof(type)); \
             if (!tmp) {                                          \
                 perror(#name " realloc\n");                      \
-                exit(1);                                         \
+                abort();                                         \
             }                                                    \
             v->data = tmp;                                       \
         }                                                        \

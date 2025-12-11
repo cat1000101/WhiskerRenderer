@@ -147,7 +147,7 @@ TableDirectory getTableDirectoryAt(W_Parser *parser, size_t offset) {
     table.offset = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, offset)]);
     table.length = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, length)]);
     if (table.offset + table.length > parser->fontFile.size) {
-        fprintf(stderr, "end of table is after the end of sfnt\n");
+        fprintf(stderr, "end of table '%.4s' is after the end of sfnt\n", (char *)(&table.tag));
         return (TableDirectory){0};
     }
 
@@ -161,9 +161,9 @@ TableDirectory getTableDirectoryAt(W_Parser *parser, size_t offset) {
         }
     } else if (calculatedChecksum != table.checkSum) {
         fprintf(stderr, "table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n",
-                (char *)(&table.tag),
-                calculatedChecksum,
-                table.checkSum);
+            (char *)(&table.tag),
+            calculatedChecksum,
+            table.checkSum);
         return (TableDirectory){0};
     }
     return table;
@@ -180,7 +180,8 @@ TableDirectory getTableDirectory(W_Parser *parser, char *tag) {
         offset = (size_t)(&tables[i]) - (size_t)(tables);
         table = getTableDirectoryAt(parser, offset);
         if (!table.tag) {
-            fprintf(stderr, "invalid table directory at offset %08zX\n", offset);
+            fprintf(stderr, "invalid searched table directory '%.4s' at offset %08zX\n", tag, offset);
+            return (TableDirectory){0};
         }
         return table;
     }
@@ -188,40 +189,32 @@ TableDirectory getTableDirectory(W_Parser *parser, char *tag) {
     return (TableDirectory){0};
 }
 
-int setTables(W_Parser *parser) {
+void setTables(W_Parser *parser) {
     TableDirectory table = {0};
 
     table = getTableDirectory(parser, "head");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table head\n");
     parser->tables.head = headFromTD(parser, table);
-    if (IS_ZERO(parser->tables.head)) return 0;
 
     table = getTableDirectory(parser, "maxp");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table maxp\n");
     parser->tables.maxp = maxpFromTD(parser, table);
-    if (IS_ZERO(parser->tables.maxp)) return 0;
 
     table = getTableDirectory(parser, "hhea");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table hhea\n");
     parser->tables.hhea = hheaFromTD(parser, table);
-    if (IS_ZERO(parser->tables.hhea)) return 0;
 
     table = getTableDirectory(parser, "loca");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table loca\n");
     parser->tables.loca = locaFromTD(parser, table);
-    if (IS_ZERO(parser->tables.loca)) return 0;
 
     table = getTableDirectory(parser, "hmtx");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table hmtx\n");
     parser->tables.hmtx = hmtxFromTD(parser, table);
-    if (IS_ZERO(parser->tables.hmtx)) return 0;
 
     table = getTableDirectory(parser, "cmap");
-    if (IS_ZERO(table)) return 0;
+    if (IS_ZERO(table)) UNREACHABLE("unable to get required table cmap\n");
     parser->tables.cmap = cmapFromTD(parser, table);
-    if (IS_ZERO(parser->tables.cmap)) return 0;
-
-    return 1;
 }
 
 W_Parser checkFont(mappedFile fontFile) {
@@ -231,8 +224,7 @@ W_Parser checkFont(mappedFile fontFile) {
     if (scaler != 0x74727565 && scaler != 0x00010000) {
         char *incorrectTag = (scaler == 0x74797031) ? "typ1" : (scaler == 0x4F54544F) ? "OTTO"
                                                                                       : "unknown";
-        fprintf(stderr, "incompatable font format %s value 0x%08X\n", incorrectTag, scaler);
-        return returnStruct;
+        UNREACHABLE("incompatable font format %s value 0x%08X\n", incorrectTag, scaler);
     }
     if (fontFile.size < sizeof(OffsetSubTable) + (sizeof(TableDirectory) * numTables)) {
         fprintf(stderr, "size of sfnt smaller then size of the font directory\n");
@@ -241,8 +233,7 @@ W_Parser checkFont(mappedFile fontFile) {
 
     uint32_t fontChecksum = calcTableChecksum((uint32_t *)fontFile.data, fontFile.size);
     if (fontChecksum != 0xB1B0AFBA) {
-        fprintf(stderr, "font checksum incorrect 0x%08X when expecting 0x%08X\n", fontChecksum, 0xB1B0AFBA);
-        return returnStruct;
+        UNREACHABLE("font checksum incorrect 0x%08X when expecting 0x%08X\n", fontChecksum, 0xB1B0AFBA);
     }
     returnStruct.fontFile = fontFile;
     returnStruct.numTables = numTables;
@@ -252,9 +243,7 @@ W_Parser checkFont(mappedFile fontFile) {
 W_Font *parseFont(mappedFile fontFile) {
     // W_Font font = {0};
     W_Parser parser = checkFont(fontFile);
-    if (IS_ZERO(parser)) return NULL;
-
-    if (!setTables(&parser)) return NULL;
+    setTables(&parser);
 
     const int screenWidth = 800;
     const int screenHeight = 600;

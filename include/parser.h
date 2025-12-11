@@ -7,14 +7,6 @@
 #include "utils.h"
 
 typedef struct {
-    uint8_t x, y;
-} ShortVec2;
-
-typedef struct {
-    uint16_t x, y;
-} Vec2;
-
-typedef struct {
     uint32_t scalerType;
     uint16_t numTables;
     uint16_t searchRange;
@@ -105,15 +97,9 @@ typedef struct {
 } Hhea;
 
 typedef struct {
-    uint16_t platformID;         // Platform identifier
-    uint16_t platformSpecificID; // Platform-specific encoding identifier
-    uint32_t offset;             // Offset of the mapping table
-} CmapSubtable;
-
-typedef struct {
     uint16_t version;         // Version number (Set to zero)
     uint16_t numberSubtables; // Number of encoding subtables
-    CmapSubtable subtable;
+    void *cmapFormat;
 } Cmap;
 
 typedef struct {
