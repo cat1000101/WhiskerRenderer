@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-// #include "characterMap.h"
 #include "utils.h"
 
 typedef struct {
@@ -106,6 +105,18 @@ typedef struct {
 } Hhea;
 
 typedef struct {
+    uint16_t platformID;         // Platform identifier
+    uint16_t platformSpecificID; // Platform-specific encoding identifier
+    uint32_t offset;             // Offset of the mapping table
+} CmapSubtable;
+
+typedef struct {
+    uint16_t version;         // Version number (Set to zero)
+    uint16_t numberSubtables; // Number of encoding subtables
+    CmapSubtable subtable;
+} Cmap;
+
+typedef struct {
     struct {
         uint16_t advanceWidth;
         int16_t leftSideBearing;
@@ -131,7 +142,7 @@ typedef struct {
     uint16_t numTables;
     struct {
         Head head;
-        // Cmap cmap;
+        Cmap cmap;
         Maxp maxp;
         Loca loca;
         Hhea hhea;

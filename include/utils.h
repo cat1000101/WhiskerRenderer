@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #define UNUSED(x) (void)(x)
 // used for structs

@@ -6,20 +6,20 @@
 #include "parser.h"
 
 typedef enum {
-    Unicode = 0,   // Indicates Unicode version.
-    Macintosh = 1, // Script Manager code.
-    reserved = 2,  // do not use
-    Microsoft = 3  // Microsoft encoding.
+    PLATFORMS_UNICODE = 0,   // Indicates Unicode version.
+    PLATFORMS_MACINTOSH = 1, // Script Manager code.
+    PLATFORMS_RESERVED = 2,  // do not use
+    PLATFORMS_MICROSOFT = 3  // Microsoft encoding.
 } Platforms;
 
 typedef enum {
-    Version10 = 0,                 // 1.0 semantics
-    Version11 = 1,                 // 1.1 semantics
-    ISO = 2,                       // 10646 1993 semantics (deprecated)
-    UnicodeBMP = 3,                // 2.0 or later semantics (BMP only)
-    UnicodeExtended = 4,           // 2.0 or later semantics (non-BMP characters allowed)
-    UnicodeVariationSequences = 5, // Variation Sequences
-    LastResort = 6,
+    UNICODEI_DENTIFIERS_VERSION10 = 0,                   // 1.0 semantics
+    UNICODEI_DENTIFIERS_VERSION11 = 1,                   // 1.1 semantics
+    UNICODEI_DENTIFIERS_ISO = 2,                         // 10646 1993 semantics (deprecated)
+    UNICODEI_DENTIFIERS_UNICODE_BMP = 3,                 // 2.0 or later semantics (BMP only)
+    UNICODEI_DENTIFIERS_UNICODE_EXTENDED = 4,            // 2.0 or later semantics (non-BMP characters allowed)
+    UNICODEI_DENTIFIERS_UNICODE_VARIATION_SEQUENCES = 5, // Variation Sequences
+    UNICODEI_DENTIFIERS_LASTRESORT = 6,
 } UnicodeIdentifiers;
 
 typedef struct {
@@ -54,18 +54,6 @@ typedef struct {
     uint32_t nGroups;  // Number of groupings which follow
     CmapFormat12Group *groups;
 } CmapFormat12;
-
-typedef struct {
-    uint16_t platformID;         // Platform identifier
-    uint16_t platformSpecificID; // Platform-specific encoding identifier
-    uint32_t offset;             // Offset of the mapping table
-} CmapSubtable;
-
-typedef struct {
-    uint16_t version;         // Version number (Set to zero)
-    uint16_t numberSubtables; // Number of encoding subtables
-    CmapSubtable *subtables;
-} Cmap;
 
 Cmap cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
 

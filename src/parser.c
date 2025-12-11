@@ -3,7 +3,7 @@
 
 #include "raylib.h"
 
-// #include "characterMap.h"
+#include "characterMap.h"
 #include "parser.h"
 #include "utils.h"
 
@@ -83,15 +83,18 @@ Loca locaFromTD(W_Parser *parser, TableDirectory locaTD) {
 
     returnTable.len = parser->tables.maxp.numGlyphs;
     uint8_t *tempView = &parser->fontFile.data[locaTD.offset];
+    // printf("sizeof shortOffset: %d longOffset: %d\n",
+    //        sizeof(*returnTable.offsets.shortOffsets),
+    //        sizeof(*returnTable.offsets.longOffsets));
     if (parser->tables.head.indexToLocFormat == 0) {
-        returnTable.offsets.shortOffsets = SAFE_MALLOC(sizeof(returnTable.offsets.shortOffsets) * returnTable.len);
+        returnTable.offsets.shortOffsets = SAFE_MALLOC(sizeof(*returnTable.offsets.shortOffsets) * returnTable.len);
         for (i = 0; i <= returnTable.len; i++) {
-            returnTable.offsets.shortOffsets[i] = read_uint16_t_endian(tempView + i * sizeof(returnTable.offsets.shortOffsets));
+            returnTable.offsets.shortOffsets[i] = read_uint16_t_endian(tempView + i * sizeof(*returnTable.offsets.shortOffsets));
         }
     } else {
-        returnTable.offsets.longOffsets = SAFE_MALLOC(sizeof(returnTable.offsets.longOffsets) * returnTable.len);
+        returnTable.offsets.longOffsets = SAFE_MALLOC(sizeof(*returnTable.offsets.longOffsets) * returnTable.len);
         for (i = 0; i <= returnTable.len; i++) {
-            returnTable.offsets.longOffsets[i] = read_uint32_t_endian(tempView + i * sizeof(returnTable.offsets.longOffsets));
+            returnTable.offsets.longOffsets[i] = read_uint32_t_endian(tempView + i * sizeof(*returnTable.offsets.longOffsets));
         }
     }
 
@@ -104,7 +107,7 @@ Hmtx hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     returnTable.hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
     returnTable.leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
 
-    returnTable.hMetrics = SAFE_MALLOC(returnTable.hMetricsLen * sizeof(returnTable.hMetrics));
+    returnTable.hMetrics = SAFE_MALLOC(returnTable.hMetricsLen * sizeof(*returnTable.hMetrics));
     for (i = 0; i < returnTable.hMetricsLen; i++) {
         returnTable.hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
         returnTable.hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
@@ -157,7 +160,10 @@ TableDirectory getTableDirectoryAt(W_Parser *parser, size_t offset) {
             return (TableDirectory){0};
         }
     } else if (calculatedChecksum != table.checkSum) {
-        fprintf(stderr, "table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n", (char *)(&table.tag), calculatedChecksum, table.checkSum);
+        fprintf(stderr, "table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n",
+                (char *)(&table.tag),
+                calculatedChecksum,
+                table.checkSum);
         return (TableDirectory){0};
     }
     return table;
@@ -210,10 +216,10 @@ int setTables(W_Parser *parser) {
     parser->tables.hmtx = hmtxFromTD(parser, table);
     if (IS_ZERO(parser->tables.hmtx)) return 0;
 
-    // table = getTableDirectory(parser, "cmap");
-    // if (IS_ZERO(table)) return 0;
-    // parser->tables.cmap = cmapFromTD(parser, table);
-    // if (IS_ZERO(parser->tables.cmap)) return 0;
+    table = getTableDirectory(parser, "cmap");
+    if (IS_ZERO(table)) return 0;
+    parser->tables.cmap = cmapFromTD(parser, table);
+    if (IS_ZERO(parser->tables.cmap)) return 0;
 
     return 1;
 }
