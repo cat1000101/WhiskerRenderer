@@ -2,8 +2,9 @@
 #include "parser.h"
 #include "utils.h"
 
-int parseCmapFormat4(W_Parser *parser, size_t formatOffset, CmapFormat4 *result) {
+CmapFormat4 *parseCmapFormat4(W_Parser *parser, size_t formatOffset) {
     uint8_t *tempView = &parser->fontFile.data[formatOffset];
+    CmapFormat4 *result = SAFE_MALLOC(sizeof(CmapFormat4));
     result->format = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, format)]);
     result->length = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, length)]);
     result->language = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, language)]);
@@ -13,7 +14,7 @@ int parseCmapFormat4(W_Parser *parser, size_t formatOffset, CmapFormat4 *result)
     result->rangeShift = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, rangeShift)]);
     result->segmentsLength = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, segmentsLength)]);
 
-    return 0;
+    return result;
 }
 
 int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
@@ -67,13 +68,16 @@ int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
 
     switch (read_uint16_t_endian(&tempView[subtable.offset])) {
     case 4:
-        parseCmapFormat4(parser, cmapTD.offset + subtable.offset, result->cmapFormat);
+        result->cmapFormat = parseCmapFormat4(parser, cmapTD.offset + subtable.offset);
         break;
     case 12:
         TODO("make parse format 12");
         break;
     default:
         ERROR_OUT("format table not supported");
+    }
+    if (!result->cmapFormat) { 
+        return 1;
     }
 
     return 0;
