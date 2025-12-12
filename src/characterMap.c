@@ -67,7 +67,7 @@ int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
 
     switch (read_uint16_t_endian(&tempView[subtable.offset])) {
     case 4:
-        parseCmapFormat4(parser, cmapTD.offset + subtable.offset, &result->cmapFormat);
+        parseCmapFormat4(parser, cmapTD.offset + subtable.offset, result->cmapFormat);
         break;
     case 12:
         TODO("make parse format 12");
