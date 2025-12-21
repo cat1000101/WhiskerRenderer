@@ -31,13 +31,15 @@
     } while (0)
 
 // used for structs
-#define IS_ZERO(x) ({                    \
-    uint8_t _zeros[sizeof(x)] = {0};     \
-    memcmp(&x, &_zeros, sizeof(x)) == 0; \
-})
+#define IS_ZERO(x)                           \
+    ({                                       \
+        uint8_t _zeros[sizeof(x)] = {0};     \
+        memcmp(&x, &_zeros, sizeof(x)) == 0; \
+    })
 
 // #define SWAP_ENDIAN_16(x) (((uint16_t)(x) & 0xFF00) >> 8 | ((uint16_t)(x) & 0x00FF) << 8)
-// #define SWAP_ENDIAN_32(x) (SWAP_ENDIAN_16((uint32_t)(x) & 0xFFFF) << 16 | SWAP_ENDIAN_16(((uint32_t)(x) & 0xFFFF0000) >> 16))
+// #define SWAP_ENDIAN_32(x) (SWAP_ENDIAN_16((uint32_t)(x) & 0xFFFF) << 16 | SWAP_ENDIAN_16(((uint32_t)(x) & 0xFFFF0000)
+// >> 16))
 
 #define SWAP_ENDIAN_16(x) __builtin_bswap16(x)
 #define SWAP_ENDIAN_32(x) __builtin_bswap32(x)
@@ -61,15 +63,19 @@ READ_TYPE_ENDIAN(int32_t)
 
 #define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
 
+#define STR2(x) #x
+#define STR(x) STR2(x)
+
 // it is "safe"
-#define SAFE_MALLOC(size) ({  \
-    void *ptr = malloc(size); \
-    if (!ptr) {               \
-        perror(__func__);     \
-        abort();              \
-    }                         \
-    ptr;                      \
-})
+#define SAFE_MALLOC(size)                           \
+    ({                                              \
+        void *ptr = malloc(size);                   \
+        if (!ptr) {                                 \
+            perror(__FILE__ ":" STR(__LINE__) ":"); \
+            abort();                                \
+        }                                           \
+        ptr;                                        \
+    })
 
 #define CREATE_VEC(name, type)                                   \
     typedef struct {                                             \

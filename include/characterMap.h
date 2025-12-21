@@ -22,17 +22,19 @@ typedef enum {
     UNICODEI_DENTIFIERS_LASTRESORT = 6,
 } UnicodeIdentifiers;
 
+// clang-format off
 typedef struct {
-    uint16_t format;         // Format number is set to 4
-    uint16_t length;         // Length of subtable in bytes
-    uint16_t language;       // Language code (see above)
-    uint16_t segCountX2;     // 2 * segCount
-    uint16_t searchRange;    // 2 * (2**FLOOR(log2(segCount)))
-    uint16_t entrySelector;  // log2(searchRange/2)
-    uint16_t rangeShift;     // (2 * segCount) - searchRange
-    uint16_t segmentsLength; // segmentsLength = length - 14
-    uint16_t *segments;      // encompassing array for all tables
-    uint16_t *endCode;       // [segCount]	Ending character code for each segment, last = 0xFFFF.
+    uint16_t format;        // Format number is set to 4
+    uint16_t length;        // Length of subtable in bytes
+    uint16_t language;      // Language code (see above)
+    uint16_t segCountX2;    // 2 * segCount
+    uint16_t searchRange;   // 2 * (2**FLOOR(log2(segCount)))
+    uint16_t entrySelector; // log2(searchRange/2)
+    uint16_t rangeShift;    // (2 * segCount) - searchRange
+    size_t segmentsLength;  // segmentsLength = length - 14(length of all other data in the format) - 8(length of cmap header)
+    size_t segCount;        // segCountX2 / 2
+    uint16_t *segments;     // encompassing array for all tables
+    uint16_t *endCode;      // [segCount]	Ending character code for each segment, last = 0xFFFF.
     // UInt16	reservedPad	This value should be zero
     uint16_t *startCode;       // [segCount]	Starting character code for each segment
     uint16_t *idDelta;         // [segCount]	Delta for all character codes in segment
@@ -54,6 +56,7 @@ typedef struct {
     uint32_t nGroups;  // Number of groupings which follow
     CmapFormat12Group *groups;
 } CmapFormat12;
+// clang-format on
 
 typedef struct {
     uint16_t format;
@@ -65,6 +68,7 @@ typedef struct {
     uint32_t offset;             // Offset of the mapping table
 } CmapSubtable;
 
+uint16_t getGlyphIndex(W_Parser *parser, uint16_t c);
 int cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
 
 #endif

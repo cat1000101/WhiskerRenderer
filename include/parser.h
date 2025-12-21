@@ -31,6 +31,7 @@ typedef struct {
 // 'name'	naming - not needed
 // 'post'	PostScript - not needed
 
+// clang-format off
 typedef uint16_t shortFrac; // 16-bit signed fraction
 typedef uint32_t Fixed;     // 16.16-bit signed fixed-point number
 typedef int16_t FWord;      // 16-bit signed integer that describes a quantity in FUnits, the smallest measurable distance in em space.
@@ -95,6 +96,7 @@ typedef struct {
     int16_t metricDataFormat;     // 0 for current format
     uint16_t numOfLongHorMetrics; // number of advance widths in metrics table
 } Hhea;
+// // clang-format on
 
 typedef struct {
     uint16_t version;         // Version number (Set to zero)

@@ -1,6 +1,13 @@
 ---
 BasedOnStyle: LLVM
 IndentWidth: 4
-ColumnLimit: 0
+ColumnLimit: 120
+ContinuationIndentWidth: 4
+BreakBeforeBinaryOperators: NonAssignment
+AlignEscapedNewlines: LeftWithLastLine
+ReflowComments: IndentOnly
+SpacesInLineCommentPrefix:
+ Minimum: 1
+ Maximum: 1
 AllowShortIfStatementsOnASingleLine: true
 ...

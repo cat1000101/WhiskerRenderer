@@ -5,9 +5,7 @@
 
 #include "utils.h"
 
-void usage(const char *name) {
-    printf("usage:\n%s fontFile.ttf\n", name);
-}
+void usage(const char *name) { printf("usage:\n%s fontFile.ttf\n", name); }
 
 int parseArgs(int argc, char *argv[]) {
     if (argc != 2) {
@@ -41,6 +39,4 @@ int mapFile(int fd, MappedFile *mappedFile) {
     return 1;
 }
 
-void unmapFile(MappedFile mf) {
-    munmap(mf.data, mf.size);
-}
+void unmapFile(MappedFile mf) { munmap(mf.data, mf.size); }
