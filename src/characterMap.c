@@ -17,17 +17,18 @@ CmapFormat4 *parseCmapFormat4(W_Parser *parser, size_t formatOffset) {
     return result;
 }
 
-int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
+int cmapFromTD(W_Parser *parser, TableDirectory cmapTD) {
     uint8_t *tempView = &parser->fontFile.data[cmapTD.offset];
+    Cmap *cmapView = &parser->tables.cmap;
     CmapSubtable subtable = (CmapSubtable){0};
     size_t i = 0;
     uint16_t id = 0;
     uint16_t sid = 0;
 
-    result->version = read_uint16_t_endian(tempView);
-    result->numberSubtables = read_uint16_t_endian(&tempView[OFFSET_OF(Cmap, numberSubtables)]);
+    cmapView->version = read_uint16_t_endian(tempView);
+    cmapView->numberSubtables = read_uint16_t_endian(&tempView[OFFSET_OF(Cmap, numberSubtables)]);
 
-    for (i = 0; i < result->numberSubtables; i++) {
+    for (i = 0; i < cmapView->numberSubtables; i++) {
         id = read_uint16_t_endian(&tempView[4 + sizeof(CmapSubtable) * i + OFFSET_OF(CmapSubtable, platformID)]);
         switch (id) {
         case PLATFORMS_UNICODE:
@@ -68,7 +69,7 @@ int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
 
     switch (read_uint16_t_endian(&tempView[subtable.offset])) {
     case 4:
-        result->cmapFormat = parseCmapFormat4(parser, cmapTD.offset + subtable.offset);
+        cmapView->cmapFormat = parseCmapFormat4(parser, cmapTD.offset + subtable.offset);
         break;
     case 12:
         TODO("make parse format 12");
@@ -76,7 +77,7 @@ int cmapFromTD(W_Parser *parser, TableDirectory cmapTD, Cmap *result) {
     default:
         ERROR_OUT("format table not supported");
     }
-    if (!result->cmapFormat) { 
+    if (!cmapView->cmapFormat) { 
         return 1;
     }
 

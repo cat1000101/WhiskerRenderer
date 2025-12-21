@@ -7,99 +7,105 @@
 #include "parser.h"
 #include "utils.h"
 
-void headFromTD(W_Parser *parser, TableDirectory headTD, Head *result) {
+void headFromTD(W_Parser *parser, TableDirectory headTD) {
     Head *table = (Head *)(&parser->fontFile.data[headTD.offset]);
+    Head *headView = &parser->tables.head;
 
-    result->version = SWAP_ENDIAN_32(table->version);
-    result->fontRevision = SWAP_ENDIAN_32(table->fontRevision);
-    result->checkSumAdjustment = SWAP_ENDIAN_32(table->checkSumAdjustment);
-    result->magicNumber = SWAP_ENDIAN_32(table->magicNumber);
-    result->flags = SWAP_ENDIAN_16(table->flags);
-    result->unitsPerEm = SWAP_ENDIAN_16(table->unitsPerEm);
-    result->created = table->created;
-    result->modified = table->modified;
-    result->xMin = (int16_t)SWAP_ENDIAN_16(table->xMin);
-    result->yMin = (int16_t)SWAP_ENDIAN_16(table->yMin);
-    result->xMax = (int16_t)SWAP_ENDIAN_16(table->xMax);
-    result->yMax = (int16_t)SWAP_ENDIAN_16(table->yMax);
-    result->macStyle = SWAP_ENDIAN_16(table->macStyle);
-    result->lowestRecPPEM = SWAP_ENDIAN_16(table->lowestRecPPEM);
-    result->fontDirectionHint = (int16_t)SWAP_ENDIAN_16(table->fontDirectionHint);
-    result->indexToLocFormat = (int16_t)SWAP_ENDIAN_16(table->indexToLocFormat);
-    result->glyphDataFormat = (int16_t)SWAP_ENDIAN_16(table->glyphDataFormat);
+    headView->version = SWAP_ENDIAN_32(table->version);
+    headView->fontRevision = SWAP_ENDIAN_32(table->fontRevision);
+    headView->checkSumAdjustment = SWAP_ENDIAN_32(table->checkSumAdjustment);
+    headView->magicNumber = SWAP_ENDIAN_32(table->magicNumber);
+    headView->flags = SWAP_ENDIAN_16(table->flags);
+    headView->unitsPerEm = SWAP_ENDIAN_16(table->unitsPerEm);
+    headView->created = table->created;
+    headView->modified = table->modified;
+    headView->xMin = (int16_t)SWAP_ENDIAN_16(table->xMin);
+    headView->yMin = (int16_t)SWAP_ENDIAN_16(table->yMin);
+    headView->xMax = (int16_t)SWAP_ENDIAN_16(table->xMax);
+    headView->yMax = (int16_t)SWAP_ENDIAN_16(table->yMax);
+    headView->macStyle = SWAP_ENDIAN_16(table->macStyle);
+    headView->lowestRecPPEM = SWAP_ENDIAN_16(table->lowestRecPPEM);
+    headView->fontDirectionHint = (int16_t)SWAP_ENDIAN_16(table->fontDirectionHint);
+    headView->indexToLocFormat = (int16_t)SWAP_ENDIAN_16(table->indexToLocFormat);
+    headView->glyphDataFormat = (int16_t)SWAP_ENDIAN_16(table->glyphDataFormat);
 }
-void maxpFromTD(W_Parser *parser, TableDirectory maxpTD, Maxp *result) {
+void maxpFromTD(W_Parser *parser, TableDirectory maxpTD) {
     Maxp *table = (Maxp *)(&parser->fontFile.data[maxpTD.offset]);
+    Maxp *maxpView = &parser->tables.maxp;
 
-    result->version = SWAP_ENDIAN_32(table->version);
-    result->numGlyphs = SWAP_ENDIAN_16(table->numGlyphs);
-    result->maxPoints = SWAP_ENDIAN_16(table->maxPoints);
-    result->maxContours = SWAP_ENDIAN_16(table->maxContours);
-    result->maxComponentPoints = SWAP_ENDIAN_16(table->maxComponentPoints);
-    result->maxComponentContours = SWAP_ENDIAN_16(table->maxComponentContours);
-    result->maxZones = SWAP_ENDIAN_16(table->maxZones);
-    result->maxTwilightPoints = SWAP_ENDIAN_16(table->maxTwilightPoints);
-    result->maxStorage = SWAP_ENDIAN_16(table->maxStorage);
-    result->maxFunctionDefs = SWAP_ENDIAN_16(table->maxFunctionDefs);
-    result->maxInstructionDefs = SWAP_ENDIAN_16(table->maxInstructionDefs);
-    result->maxStackElements = SWAP_ENDIAN_16(table->maxStackElements);
-    result->maxSizeOfInstructions = SWAP_ENDIAN_16(table->maxSizeOfInstructions);
-    result->maxComponentElements = SWAP_ENDIAN_16(table->maxComponentElements);
-    result->maxComponentDepth = SWAP_ENDIAN_16(table->maxComponentDepth);
+    maxpView->version = SWAP_ENDIAN_32(table->version);
+    maxpView->numGlyphs = SWAP_ENDIAN_16(table->numGlyphs);
+    maxpView->maxPoints = SWAP_ENDIAN_16(table->maxPoints);
+    maxpView->maxContours = SWAP_ENDIAN_16(table->maxContours);
+    maxpView->maxComponentPoints = SWAP_ENDIAN_16(table->maxComponentPoints);
+    maxpView->maxComponentContours = SWAP_ENDIAN_16(table->maxComponentContours);
+    maxpView->maxZones = SWAP_ENDIAN_16(table->maxZones);
+    maxpView->maxTwilightPoints = SWAP_ENDIAN_16(table->maxTwilightPoints);
+    maxpView->maxStorage = SWAP_ENDIAN_16(table->maxStorage);
+    maxpView->maxFunctionDefs = SWAP_ENDIAN_16(table->maxFunctionDefs);
+    maxpView->maxInstructionDefs = SWAP_ENDIAN_16(table->maxInstructionDefs);
+    maxpView->maxStackElements = SWAP_ENDIAN_16(table->maxStackElements);
+    maxpView->maxSizeOfInstructions = SWAP_ENDIAN_16(table->maxSizeOfInstructions);
+    maxpView->maxComponentElements = SWAP_ENDIAN_16(table->maxComponentElements);
+    maxpView->maxComponentDepth = SWAP_ENDIAN_16(table->maxComponentDepth);
 }
-void hheaFromTD(W_Parser *parser, TableDirectory hheaTD, Hhea *result) {
+void hheaFromTD(W_Parser *parser, TableDirectory hheaTD) {
     Hhea *table = (Hhea *)(&parser->fontFile.data[hheaTD.offset]);
+    Hhea *hheaView = &parser->tables.hhea;
 
-    result->version = SWAP_ENDIAN_32(table->version);
-    result->ascent = (int16_t)SWAP_ENDIAN_16(table->ascent);
-    result->descent = (int16_t)SWAP_ENDIAN_16(table->descent);
-    result->lineGap = (int16_t)SWAP_ENDIAN_16(table->lineGap);
-    result->advanceWidthMax = SWAP_ENDIAN_16(table->advanceWidthMax);
-    result->minLeftSideBearing = (int16_t)SWAP_ENDIAN_16(table->minLeftSideBearing);
-    result->minRightSideBearing = (int16_t)SWAP_ENDIAN_16(table->minRightSideBearing);
-    result->xMaxExtent = (int16_t)SWAP_ENDIAN_16(table->xMaxExtent);
-    result->caretSlopeRise = (int16_t)SWAP_ENDIAN_16(table->caretSlopeRise);
-    result->caretSlopeRun = (int16_t)SWAP_ENDIAN_16(table->caretSlopeRun);
-    result->caretOffset = (int16_t)SWAP_ENDIAN_16(table->caretOffset);
-    result->reserved1 = (int16_t)SWAP_ENDIAN_16(table->reserved1);
-    result->reserved2 = (int16_t)SWAP_ENDIAN_16(table->reserved2);
-    result->reserved3 = (int16_t)SWAP_ENDIAN_16(table->reserved3);
-    result->reserved4 = (int16_t)SWAP_ENDIAN_16(table->reserved4);
-    result->metricDataFormat = (int16_t)SWAP_ENDIAN_16(table->metricDataFormat);
-    result->numOfLongHorMetrics = SWAP_ENDIAN_16(table->numOfLongHorMetrics);
+    hheaView->version = SWAP_ENDIAN_32(table->version);
+    hheaView->ascent = (int16_t)SWAP_ENDIAN_16(table->ascent);
+    hheaView->descent = (int16_t)SWAP_ENDIAN_16(table->descent);
+    hheaView->lineGap = (int16_t)SWAP_ENDIAN_16(table->lineGap);
+    hheaView->advanceWidthMax = SWAP_ENDIAN_16(table->advanceWidthMax);
+    hheaView->minLeftSideBearing = (int16_t)SWAP_ENDIAN_16(table->minLeftSideBearing);
+    hheaView->minRightSideBearing = (int16_t)SWAP_ENDIAN_16(table->minRightSideBearing);
+    hheaView->xMaxExtent = (int16_t)SWAP_ENDIAN_16(table->xMaxExtent);
+    hheaView->caretSlopeRise = (int16_t)SWAP_ENDIAN_16(table->caretSlopeRise);
+    hheaView->caretSlopeRun = (int16_t)SWAP_ENDIAN_16(table->caretSlopeRun);
+    hheaView->caretOffset = (int16_t)SWAP_ENDIAN_16(table->caretOffset);
+    hheaView->reserved1 = (int16_t)SWAP_ENDIAN_16(table->reserved1);
+    hheaView->reserved2 = (int16_t)SWAP_ENDIAN_16(table->reserved2);
+    hheaView->reserved3 = (int16_t)SWAP_ENDIAN_16(table->reserved3);
+    hheaView->reserved4 = (int16_t)SWAP_ENDIAN_16(table->reserved4);
+    hheaView->metricDataFormat = (int16_t)SWAP_ENDIAN_16(table->metricDataFormat);
+    hheaView->numOfLongHorMetrics = SWAP_ENDIAN_16(table->numOfLongHorMetrics);
 }
-int locaFromTD(W_Parser *parser, TableDirectory locaTD, Loca *result) {
+int locaFromTD(W_Parser *parser, TableDirectory locaTD) {
     uint8_t *tempView = &parser->fontFile.data[locaTD.offset];
+    Loca *locaView = &parser->tables.loca;
     size_t i = 0;
 
-    result->len = parser->tables.maxp.numGlyphs;
+    locaView->len = parser->tables.maxp.numGlyphs;
     if (parser->tables.head.indexToLocFormat == 0) {
-        result->offsets.shortOffsets = SAFE_MALLOC(sizeof(*result->offsets.shortOffsets) * result->len);
-        for (i = 0; i <= result->len; i++) {
-            result->offsets.shortOffsets[i] = read_uint16_t_endian(tempView + i * sizeof(*result->offsets.shortOffsets));
+        locaView->offsets.shortOffsets = SAFE_MALLOC(sizeof(*locaView->offsets.shortOffsets) * locaView->len);
+        for (i = 0; i <= locaView->len; i++) {
+            locaView->offsets.shortOffsets[i] = read_uint16_t_endian(tempView + i * sizeof(*locaView->offsets.shortOffsets));
         }
     } else {
-        result->offsets.longOffsets = SAFE_MALLOC(sizeof(*result->offsets.longOffsets) * result->len);
-        for (i = 0; i <= result->len; i++) {
-            result->offsets.longOffsets[i] = read_uint32_t_endian(tempView + i * sizeof(*result->offsets.longOffsets));
+        locaView->offsets.longOffsets = SAFE_MALLOC(sizeof(*locaView->offsets.longOffsets) * locaView->len);
+        for (i = 0; i <= locaView->len; i++) {
+            locaView->offsets.longOffsets[i] = read_uint32_t_endian(tempView + i * sizeof(*locaView->offsets.longOffsets));
         }
     }
     return 0;
 }
-int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD, Hmtx *result) {
+int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     uint8_t *tempView = &parser->fontFile.data[hmtxTD.offset];
+    Hmtx *htmxView = &parser->tables.hmtx;
     size_t i = 0;
-    result->hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
-    result->leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
+    htmxView->hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
+    htmxView->leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
 
-    result->hMetrics = SAFE_MALLOC(result->hMetricsLen * sizeof(*result->hMetrics));
-    for (i = 0; i < result->hMetricsLen; i++) {
-        result->hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
-        result->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
+    htmxView->hMetrics = SAFE_MALLOC(htmxView->hMetricsLen * sizeof(*htmxView->hMetrics));
+    for (i = 0; i < htmxView->hMetricsLen; i++) {
+        htmxView->hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
+        htmxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
     }
-    for (i = result->hMetricsLen; i < parser->tables.maxp.numGlyphs; i++) {
-        result->hMetrics[i].advanceWidth = result->hMetrics[result->hMetricsLen - 1].advanceWidth;
-        result->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
+    for (i = htmxView->hMetricsLen; i < parser->tables.maxp.numGlyphs; i++) {
+        htmxView->hMetrics[i].advanceWidth =
+            htmxView->hMetrics[htmxView->hMetricsLen - 1].advanceWidth;
+        htmxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
     }
     return 0;
 }
@@ -176,22 +182,22 @@ int setTables(W_Parser *parser) {
     TableDirectory table = {0};
 
     if (getTableDirectory(parser, "head", &table)) ERROR_OUT("unable to get required table head");
-    headFromTD(parser, table, &parser->tables.head);
+    headFromTD(parser, table);
 
     if (getTableDirectory(parser, "maxp", &table)) ERROR_OUT("unable to get required table maxp");
-    maxpFromTD(parser, table, &parser->tables.maxp);
+    maxpFromTD(parser, table);
 
     if (getTableDirectory(parser, "hhea", &table)) ERROR_OUT("unable to get required table hhea");
-    hheaFromTD(parser, table, &parser->tables.hhea);
+    hheaFromTD(parser, table);
 
     if (getTableDirectory(parser, "loca", &table)) ERROR_OUT("unable to get required table loca");
-    if (locaFromTD(parser, table, &parser->tables.loca)) ERROR_OUT("failed to parse loca");
+    if (locaFromTD(parser, table)) ERROR_OUT("failed to parse loca");
 
     if (getTableDirectory(parser, "hmtx", &table)) ERROR_OUT("unable to get required table hmtx");
-    if (hmtxFromTD(parser, table, &parser->tables.hmtx)) ERROR_OUT("failed to parse hmtx");
+    if (hmtxFromTD(parser, table)) ERROR_OUT("failed to parse hmtx");
 
     if (getTableDirectory(parser, "cmap", &table)) ERROR_OUT("unable to get required table cmap");
-    if (cmapFromTD(parser, table, &parser->tables.cmap)) ERROR_OUT("failed to parse hmtx");
+    if (cmapFromTD(parser, table)) ERROR_OUT("failed to parse hmtx");
 
     return 0;
 }
