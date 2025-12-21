@@ -7,7 +7,7 @@ BreakBeforeBinaryOperators: NonAssignment
 AlignEscapedNewlines: LeftWithLastLine
 ReflowComments: IndentOnly
 SpacesInLineCommentPrefix:
- Minimum: 1
- Maximum: 1
+    Minimum: 1
+    Maximum: 1
 AllowShortIfStatementsOnASingleLine: true
 ...

@@ -1,0 +1,15 @@
+[
+    {
+        "label": "Debug WhiskerRenderer",
+        "adapter": "CodeLLDB",
+        "request": "launch",
+        "program": "$ZED_WORKTREE_ROOT/build/WhiskerRenderer",
+        "args": ["./Dosis-VariableFont_wght.ttf"],
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "build": {
+            "command": "make",
+            "args": ["-B"],
+            "cwd": "$ZED_WORKTREE_ROOT",
+        },
+    },
+]

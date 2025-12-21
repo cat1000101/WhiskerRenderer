@@ -1,0 +1,19 @@
+[
+    {
+        "arguments": [
+            "/usr/bin/gcc",
+            "-g",
+            "-Wall",
+            "-Werror",
+            "-Iinclude",
+            "-I/usr/include",
+            "-c",
+            "-o",
+            "build/characterMap.o",
+            "src/characterMap.c",
+        ],
+        "directory": "/home/cat/github/WhiskerRenderer",
+        "file": "src/main.c",
+        "output": "build/characterMap",
+    },
+]
