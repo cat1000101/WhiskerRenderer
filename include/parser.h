@@ -154,8 +154,9 @@ typedef struct {
     struct {
         Head head;
         Cmap cmap;
-        Maxp maxp;
         Loca loca;
+        Glyf glyf;
+        Maxp maxp;
         Hhea hhea;
         Hmtx hmtx;
     } tables;
