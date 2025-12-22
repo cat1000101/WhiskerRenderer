@@ -96,7 +96,30 @@ typedef struct {
     int16_t metricDataFormat;     // 0 for current format
     uint16_t numOfLongHorMetrics; // number of advance widths in metrics table
 } Hhea;
-// // clang-format on
+// clang-format on
+
+typedef struct {
+    struct {
+        int16_t xMin;
+        int16_t yMin;
+        int16_t xMax;
+        int16_t yMax;
+    } boundingBox;
+    size_t contourNum;
+    struct {
+        size_t length;
+        int16_t *x;
+        int16_t *y;
+        uint8_t *flags;
+    } *contours;
+    size_t charValue;
+} SimpleGlyfChar;
+
+typedef struct {
+    size_t glyfStartOffset;
+    size_t charNum;
+    SimpleGlyfChar *chars;
+} Glyf;
 
 typedef struct {
     uint16_t version;         // Version number (Set to zero)
