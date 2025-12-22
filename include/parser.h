@@ -138,6 +138,7 @@ typedef struct {
     } tables;
 } W_Parser;
 
+size_t getGlyfOffset(W_Parser *parser, size_t index);
 W_Font *parseFont(MappedFile fontFile);
 
 #endif

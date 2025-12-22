@@ -4,6 +4,7 @@
 #include "raylib.h"
 
 #include "characterMap.h"
+#include "glyf.h"
 #include "parser.h"
 #include "utils.h"
 
@@ -92,6 +93,15 @@ int locaFromTD(W_Parser *parser, TableDirectory locaTD) {
     }
     return 0;
 }
+size_t getGlyfOffset(W_Parser *parser, size_t index){
+    Loca *locaView = &parser->tables.loca;
+    if (locaView->len < index) return 0;
+    if (parser->tables.head.indexToLocFormat == 0) {
+        return locaView->offsets.shortOffsets[index] * 2;
+    } else {
+        return locaView->offsets.longOffsets[index];
+    }
+}
 int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     uint8_t *tempView = &parser->fontFile.data[hmtxTD.offset];
     Hmtx *htmxView = &parser->tables.hmtx;
@@ -142,8 +152,7 @@ int getTableDirectoryAt(W_Parser *parser, size_t offset, TableDirectory *result)
         return 1;
     }
 
-    // check the checksum of table, special case is 'head' table where we need to set a value in it to zero(subtracting
-    // also works)
+    // check the checksum of table, special case is 'head' table where we need to set a value in it to zero(subtracting also works)
     uint32_t calculatedChecksum =
         calcTableChecksum((uint32_t *)(&parser->fontFile.data[result->offset]), result->length);
     if (!memcmp("head", (char *)(&result->tag), 4)) {
@@ -200,7 +209,10 @@ int setTables(W_Parser *parser) {
     if (hmtxFromTD(parser, table)) ERROR_OUT("failed to parse hmtx");
 
     if (getTableDirectory(parser, "cmap", &table)) ERROR_OUT("unable to get required table cmap");
-    if (cmapFromTD(parser, table)) ERROR_OUT("failed to parse hmtx");
+    if (cmapFromTD(parser, table)) ERROR_OUT("failed to parse cmap");
+
+    if (getTableDirectory(parser, "glyf", &table)) ERROR_OUT("unable to get required table glyf");
+    if (glyfFromTD(parser, table)) ERROR_OUT("failed to parse glyf");
 
     return 0;
 }
