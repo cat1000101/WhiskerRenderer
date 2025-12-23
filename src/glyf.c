@@ -1,11 +1,114 @@
 #include "glyf.h"
+#include "characterMap.h"
+#include "parser.h"
+#include "utils.h"
+#include <stdint.h>
+#include <stdio.h>
 
-int parseGlyf(W_Parser *parser);
+// X_Y = 0 x coordinates, X_Y = 1 y coordinates
+size_t parseCordinateWithFlag(uint8_t *view, int16_t *coordinate, uint8_t *flags, size_t pointCount, uint8_t X_Y) {
+    uint8_t ifShort = X_Y ? OUTLINE_FLAGS_Y_SHORT_VECTOR : OUTLINE_FLAGS_X_SHORT_VECTOR;
+    uint8_t ifSame = X_Y ? OUTLINE_FLAGS_THIS_Y_IS_SAME : OUTLINE_FLAGS_THIS_X_IS_SAME;
+    uint8_t *tempView = view;
+    int16_t absolute = 0;
+    for (size_t i = 0; i < pointCount; i++) {
+        if (flags[i] & ifShort) {
+            if (flags[i] & ifSame) {
+                absolute += *tempView++;
+            } else {
+                absolute -= *tempView++;
+            }
+        } else {
+            if (!(flags[i] & ifSame)) {
+                absolute += read_int16_t_endian(tempView);
+                tempView += sizeof(int16_t);
+            }
+        }
+        coordinate[i] = absolute;
+        // printf("%c %zd: %d\n",X_Y ? 'Y' : 'X', i, coordinate[i]);
+    }
+    return (size_t)(tempView - view);
+}
+
+int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
+    size_t index = getGlyphIndex(parser, (uint16_t)charValue);
+    size_t glyfOffset = getGlyfOffset(parser, index);
+    size_t glyfSize = getGlyfOffset(parser, index + 1) - glyfOffset;
+    uint8_t *tempView = &parser->fontFile.data[parser->tables.glyf.glyfStartOffset + glyfOffset];
+    size_t i = 0;
+
+    if (!glyfSize) {
+        ERROR_OUT("empty glyf");
+    }
+
+    glyfResult->contourNum = read_int16_t_endian(tempView);
+    glyfResult->boundingBox.xMin = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, xMin)]);
+    glyfResult->boundingBox.yMin = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, yMin)]);
+    glyfResult->boundingBox.xMax = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, xMax)]);
+    glyfResult->boundingBox.yMax = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, yMax)]);
+    glyfResult->charValue = charValue;
+    tempView += sizeof(GlyphDescription);
+
+    // printf("glyf %c:contour number: %zd, bounding box: (%d, %d)min (%d, %d)max sizeof glyf: %zd, index: %zd\n",
+    // (char)glyfResult->charValue, glyfResult->contourNum, glyfResult->boundingBox.xMin,
+    // glyfResult->boundingBox.yMin, glyfResult->boundingBox.xMax, glyfResult->boundingBox.yMax, glyfSize, index);
+
+    if (glyfResult->contourNum < 0) {
+        ERROR_OUT("Component glyfs not implemented");
+    }
+
+    uint16_t *endPtsOfContours = SAFE_MALLOC(sizeof(uint16_t) * glyfResult->contourNum);
+    for (i = 0; i < glyfResult->contourNum; i++) {
+        endPtsOfContours[i] = read_uint16_t_endian(&tempView[i * sizeof(uint16_t)]);
+    }
+    tempView += sizeof(uint16_t) * glyfResult->contourNum;
+    // instructions, i am not implementing that for now
+    tempView += sizeof(uint16_t) + read_uint16_t_endian(tempView);
+
+    size_t maxPointIndex = endPtsOfContours[glyfResult->contourNum - 1];
+    size_t pointCount = maxPointIndex + 1;
+    uint8_t *flags = SAFE_MALLOC(sizeof(uint8_t) * pointCount);
+    int16_t *xPoints = SAFE_MALLOC(sizeof(int16_t) * pointCount);
+    int16_t *yPoints = SAFE_MALLOC(sizeof(int16_t) * pointCount);
+
+    size_t flagsToParse = pointCount;
+    uint8_t flag = 0;
+    uint8_t repeat = 0;
+    i = 0;
+    while (flagsToParse > 0) {
+        flag = tempView[i++];
+        if (isFlagBitSet(flag, 3)) {
+            flag = flag & (~OUTLINE_FLAGS_REPEAT);
+            for (repeat = tempView[i++] + 1; repeat > 0; repeat--) {
+                flags[pointCount - flagsToParse--] = flag;
+            }
+        } else {
+            flags[pointCount - flagsToParse--] = flag;
+        }
+    }
+    tempView += sizeof(uint8_t) * pointCount;
+    tempView += parseCordinateWithFlag(tempView, xPoints, flags, pointCount, 0);
+    tempView += parseCordinateWithFlag(tempView, yPoints, flags, pointCount, 1);
+
+    glyfResult->contours = SAFE_MALLOC(sizeof(struct Contours) * glyfResult->contourNum);
+    uint16_t startPoint = 0;
+    for (i = 0; i < glyfResult->contourNum; i++) {
+        glyfResult->contours[i].flags = &flags[startPoint];
+        glyfResult->contours[i].x = &xPoints[startPoint];
+        glyfResult->contours[i].y = &yPoints[startPoint];
+        glyfResult->contours[i].length = endPtsOfContours[i] - startPoint + 1;
+        // printf("contour %zd: startPts %d, endPts %d, length %d\n", i, startPoint, endPtsOfContours[i], endPtsOfContours[i] - startPoint + 1);
+        startPoint = endPtsOfContours[i] + 1;
+    }
+    return 0;
+}
 
 int glyfFromTD(W_Parser *parser, TableDirectory glyfTD) {
     parser->tables.glyf.glyfStartOffset = glyfTD.offset;
-    uint8_t *tempView = &parser->fontFile.data[glyfTD.offset];
-    (void)tempView;
+    SimpleGlyfChar tempGlyfChar = {0};
+    if (parseGlyf(parser, 'a', &tempGlyfChar)) {
+        printf("parseGlyf failed\n");
+    }
 
     return 0;
 }

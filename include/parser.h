@@ -106,7 +106,7 @@ typedef struct {
         int16_t yMax;
     } boundingBox;
     size_t contourNum;
-    struct {
+    struct Contours {
         size_t length;
         int16_t *x;
         int16_t *y;

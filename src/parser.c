@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "raylib.h"
+// #include "raylib.h"
 
 #include "characterMap.h"
 #include "glyf.h"
@@ -93,7 +93,7 @@ int locaFromTD(W_Parser *parser, TableDirectory locaTD) {
     }
     return 0;
 }
-size_t getGlyfOffset(W_Parser *parser, size_t index){
+size_t getGlyfOffset(W_Parser *parser, size_t index) {
     Loca *locaView = &parser->tables.loca;
     if (locaView->len < index) return 0;
     if (parser->tables.head.indexToLocFormat == 0) {
@@ -104,19 +104,19 @@ size_t getGlyfOffset(W_Parser *parser, size_t index){
 }
 int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     uint8_t *tempView = &parser->fontFile.data[hmtxTD.offset];
-    Hmtx *htmxView = &parser->tables.hmtx;
+    Hmtx *hmtxView = &parser->tables.hmtx;
     size_t i = 0;
 
-    htmxView->hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
-    htmxView->leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
-    htmxView->hMetrics = SAFE_MALLOC(htmxView->hMetricsLen * sizeof(*htmxView->hMetrics));
-    for (i = 0; i < htmxView->hMetricsLen; i++) {
-        htmxView->hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
-        htmxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
+    hmtxView->hMetricsLen = parser->tables.hhea.numOfLongHorMetrics;
+    hmtxView->leftSideBearingLen = parser->tables.maxp.numGlyphs - parser->tables.hhea.numOfLongHorMetrics;
+    hmtxView->hMetrics = SAFE_MALLOC(hmtxView->hMetricsLen * sizeof(*hmtxView->hMetrics));
+    for (i = 0; i < hmtxView->hMetricsLen; i++) {
+        hmtxView->hMetrics[i].advanceWidth = read_uint16_t_endian(tempView + i * 4);
+        hmtxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
     }
-    for (i = htmxView->hMetricsLen; i < parser->tables.maxp.numGlyphs; i++) {
-        htmxView->hMetrics[i].advanceWidth = htmxView->hMetrics[htmxView->hMetricsLen - 1].advanceWidth;
-        htmxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
+    for (i = hmtxView->hMetricsLen; i < parser->tables.maxp.numGlyphs; i++) {
+        hmtxView->hMetrics[i].advanceWidth = hmtxView->hMetrics[hmtxView->hMetricsLen - 1].advanceWidth;
+        hmtxView->hMetrics[i].leftSideBearing = read_int16_t_endian(tempView + i * 4 + 2);
     }
     return 0;
 }
@@ -125,7 +125,7 @@ uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     uint32_t nLongs = (numberOfBytesInTable + 3) / 4;
     uint32_t sum = 0;
     uint32_t temp = 0;
-    // check for unalignment and add them seperatly with big endian in mind
+    // check for nonalignment and add them separately with big endian in mind
     if (numberOfBytesInTable % 4 != 0) {
         size_t extra = numberOfBytesInTable % 4;
         nLongs--;
@@ -147,26 +147,19 @@ int getTableDirectoryAt(W_Parser *parser, size_t offset, TableDirectory *result)
     result->checkSum = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, checkSum)]);
     result->offset = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, offset)]);
     result->length = read_uint32_t_endian(&rawTable[OFFSET_OF(TableDirectory, length)]);
-    if (result->offset + result->length > parser->fontFile.size) {
-        fprintf(stderr, "end of table '%.4s' is after the end of sfnt\n", (char *)(&result->tag));
-        return 1;
-    }
+    if (result->offset + result->length > parser->fontFile.size)
+        ERROR_OUT("end of table '%.4s' is after the end of sfnt\n", (char *)(&result->tag));
 
     // check the checksum of table, special case is 'head' table where we need to set a value in it to zero(subtracting also works)
     uint32_t calculatedChecksum =
         calcTableChecksum((uint32_t *)(&parser->fontFile.data[result->offset]), result->length);
     if (!memcmp("head", (char *)(&result->tag), 4)) {
         uint32_t headChecksum = calculatedChecksum - read_uint32_t_endian(&parser->fontFile.data[result->offset + 8]);
-        if (headChecksum != result->checkSum) {
-            fprintf(stderr, "table head invalid checksum 0x%08X when expected 0x%08X\n", headChecksum,
-                    result->checkSum);
-            return 1;
-        }
-    } else if (calculatedChecksum != result->checkSum) {
-        fprintf(stderr, "table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n", (char *)(&result->tag),
-                calculatedChecksum, result->checkSum);
-        return 1;
-    }
+        if (headChecksum != result->checkSum)
+            ERROR_OUT("table head invalid checksum 0x%08X when expected 0x%08X\n", headChecksum, result->checkSum);
+    } else if (calculatedChecksum != result->checkSum)
+        ERROR_OUT("table '%.4s' invalid checksum 0x%08X when expected 0x%08X\n", (char *)(&result->tag),
+                  calculatedChecksum, result->checkSum);
     return 0;
 }
 
@@ -180,14 +173,10 @@ int getTableDirectory(W_Parser *parser, char *tag, TableDirectory *result) {
         }
         offset = (size_t)(&tables[i]) - (size_t)(tables);
         if (getTableDirectoryAt(parser, offset, result)) return 1;
-        if (!result->tag) {
-            fprintf(stderr, "invalid searched table directory '%.4s' at offset %08zX\n", tag, offset);
-            return 1;
-        }
+        if (!result->tag) ERROR_OUT("invalid searched table directory '%.4s' at offset %08zX\n", tag, offset);
         return 0;
     }
-    fprintf(stderr, "table %s not found\n", tag);
-    return 1;
+    ERROR_OUT("table %s not found\n", tag);
 }
 
 int setTables(W_Parser *parser) {
@@ -223,19 +212,14 @@ int checkFont(MappedFile fontFile, W_Parser *result) {
 
     if (scaler != 0x74727565 && scaler != 0x00010000) {
         char *incorrectTag = (scaler == 0x74797031) ? "typ1" : (scaler == 0x4F54544F) ? "OTTO" : "unknown";
-        fprintf(stderr, "incompatable font format %s value 0x%08X\n", incorrectTag, scaler);
-        return 1;
+        ERROR_OUT("incompatible font format %s value 0x%08X\n", incorrectTag, scaler);
     }
-    if (fontFile.size < sizeof(OffsetSubTable) + (sizeof(TableDirectory) * numTables)) {
-        fprintf(stderr, "size of sfnt smaller then size of the font directory\n");
-        return 1;
-    }
+    if (fontFile.size < sizeof(OffsetSubTable) + (sizeof(TableDirectory) * numTables))
+        ERROR_OUT("size of sfnt smaller then size of the font directory\n");
 
     uint32_t fontChecksum = calcTableChecksum((uint32_t *)fontFile.data, fontFile.size);
-    if (fontChecksum != 0xB1B0AFBA) {
-        fprintf(stderr, "font checksum incorrect 0x%08X when expecting 0x%08X\n", fontChecksum, 0xB1B0AFBA);
-        return 1;
-    }
+    if (fontChecksum != 0xB1B0AFBA)
+        ERROR_OUT("font checksum incorrect 0x%08X when expecting 0x%08X\n", fontChecksum, 0xB1B0AFBA);
     result->fontFile = fontFile;
     result->numTables = numTables;
     return 0;
@@ -243,20 +227,20 @@ int checkFont(MappedFile fontFile, W_Parser *result) {
 
 W_Font *parseFont(MappedFile fontFile) {
     W_Parser parser = (W_Parser){0};
+    printf("meow\n");
     if (checkFont(fontFile, &parser)) return NULL;
     if (setTables(&parser)) return NULL;
 
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-    InitWindow(screenWidth, screenHeight, "WhiskerRenderer");
+    // const int screenWidth = 800;
+    // const int screenHeight = 600;
+    // InitWindow(screenWidth, screenHeight, "WhiskerRenderer");
+    // while (!WindowShouldClose()) {
+    // BeginDrawing();
+    // ClearBackground(RAYWHITE);
+    // DrawText("Welcome to Raylib", 190, 200, 20, LIGHTGRAY);
+    // EndDrawing();
+    // }
+    // CloseWindow();
 
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawText("Welcome to Raylib", 190, 200, 20, LIGHTGRAY);
-        EndDrawing();
-    }
-
-    CloseWindow();
     return NULL;
 }

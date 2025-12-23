@@ -13,13 +13,13 @@ typedef enum {
 } Platforms;
 
 typedef enum {
-    UNICODEI_DENTIFIERS_VERSION10 = 0,                   // 1.0 semantics
-    UNICODEI_DENTIFIERS_VERSION11 = 1,                   // 1.1 semantics
-    UNICODEI_DENTIFIERS_ISO = 2,                         // 10646 1993 semantics (deprecated)
-    UNICODEI_DENTIFIERS_UNICODE_BMP = 3,                 // 2.0 or later semantics (BMP only)
-    UNICODEI_DENTIFIERS_UNICODE_EXTENDED = 4,            // 2.0 or later semantics (non-BMP characters allowed)
-    UNICODEI_DENTIFIERS_UNICODE_VARIATION_SEQUENCES = 5, // Variation Sequences
-    UNICODEI_DENTIFIERS_LASTRESORT = 6,
+    UNICODE_IDENTIFIERS_VERSION10 = 0,                   // 1.0 semantics
+    UNICODE_IDENTIFIERS_VERSION11 = 1,                   // 1.1 semantics
+    UNICODE_IDENTIFIERS_ISO = 2,                         // 10646 1993 semantics (deprecated)
+    UNICODE_IDENTIFIERS_UNICODE_BMP = 3,                 // 2.0 or later semantics (BMP only)
+    UNICODE_IDENTIFIERS_UNICODE_EXTENDED = 4,            // 2.0 or later semantics (non-BMP characters allowed)
+    UNICODE_IDENTIFIERS_UNICODE_VARIATION_SEQUENCES = 5, // Variation Sequences
+    UNICODE_IDENTIFIERS_LAST_RESORT = 6,
 } UnicodeIdentifiers;
 
 // clang-format off
@@ -45,7 +45,7 @@ typedef struct {
 typedef struct {
     uint32_t startCharCode;  // First character code in this group
     uint32_t endCharCode;    // Last character code in this group
-    uint32_t startGlyphCode; // Glyph index corresponding to the starting character code; subsequent charcters are mapped to sequential glyphs
+    uint32_t startGlyphCode; // Glyph index corresponding to the starting character code; subsequent characters are mapped to sequential glyphs
 } CmapFormat12Group;
 
 typedef struct {

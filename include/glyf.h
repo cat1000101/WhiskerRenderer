@@ -81,7 +81,7 @@ typedef struct {
         *endPtsOfContours; //	Array of last points of each contour; n is the number of contours; array entries are point indices
     uint16_t instructionLength; // Total number of bytes needed for instructions
     uint8_t *instructions;      //	Array of instructions for this glyph, length = instructionLength
-    OutlineFlags *flags;             //	Array of flags
+    OutlineFlags *flags;        //	Array of flags
     uint8_t *
         xCoordinates; // or int16_t // Array of x-coordinates; the first is relative to (0,0), others are relative to previous point
     uint8_t *
@@ -89,15 +89,15 @@ typedef struct {
 } SimpleGlyfData;
 
 typedef struct {
-    ComponentFlags flags;      // 	Component flag
-    uint16_t glyphIndex; // 	Glyph index of component
+    ComponentFlags flags; // 	Component flag
+    uint16_t glyphIndex;  // 	Glyph index of component
     // int16, int8 or uint8,	X-offset for component or point number; type depends on bits 0 and 1 in component flags
     uint16_t argument1;
     // int16, int8 or uint8,	Y-offset for component or point number type depends on bits 0 and 1 in component flags
     uint16_t argument2;
 } ComponentGlyfData;
 
-int parseGlyf(W_Parser *parser);
+int parseGlyf(W_Parser *parser, size_t index, SimpleGlyfChar *glyfResult);
 int glyfFromTD(W_Parser *parser, TableDirectory glyfTD);
 
 #endif

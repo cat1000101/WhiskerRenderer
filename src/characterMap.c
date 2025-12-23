@@ -19,9 +19,9 @@ uint16_t getGlyphIndex(W_Parser *parser, uint16_t c) {
             }
         }
     } else if (format == 12) {
-        TODO("implument format 12 get glyph index");
+        TODO("implement format 12 get glyph index");
     } else {
-        UNREACHABLE("used format that is not implumented %zd", format);
+        UNREACHABLE("used format that is not implemented %zd", format);
     }
     return 0;
 }
@@ -77,16 +77,16 @@ int cmapFromTD(W_Parser *parser, TableDirectory cmapTD) {
         sid =
             read_uint16_t_endian(&tempView[4 + sizeof(CmapSubtable) * i + OFFSET_OF(CmapSubtable, platformSpecificID)]);
         switch (sid) {
-        case UNICODEI_DENTIFIERS_VERSION10:
-        case UNICODEI_DENTIFIERS_VERSION11:
-        case UNICODEI_DENTIFIERS_UNICODE_EXTENDED:
+        case UNICODE_IDENTIFIERS_VERSION10:
+        case UNICODE_IDENTIFIERS_VERSION11:
+        case UNICODE_IDENTIFIERS_UNICODE_EXTENDED:
             subtable.platformID = id;
             subtable.platformSpecificID = sid;
             subtable.offset =
                 read_uint32_t_endian(&tempView[4 + sizeof(CmapSubtable) * i + OFFSET_OF(CmapSubtable, offset)]);
             break;
 
-        case UNICODEI_DENTIFIERS_UNICODE_BMP:
+        case UNICODE_IDENTIFIERS_UNICODE_BMP:
             subtable.platformID = id;
             subtable.platformSpecificID = sid;
             subtable.offset =

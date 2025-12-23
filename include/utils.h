@@ -1,10 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <unistd.h>
 
 #define UNUSED(x) (void)(x)
@@ -63,9 +63,7 @@ READ_TYPE_ENDIAN(int16_t)
 READ_TYPE_ENDIAN(uint32_t)
 READ_TYPE_ENDIAN(int32_t)
 
-static inline int isFlagBitSet(size_t flag, size_t index) {
-    return ((flag >> index) & 1) == 1;
-}
+static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> index) & 1) == 1; }
 
 #define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
 
