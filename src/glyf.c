@@ -1,9 +1,11 @@
-#include "glyf.h"
-#include "characterMap.h"
-#include "parser.h"
-#include "utils.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "characterMap.h"
+#include "glyf.h"
+#include "utils.h"
+#include "whiskerRendererTypes.h"
 
 // X_Y = 0 x coordinates, X_Y = 1 y coordinates
 size_t parseCordinateWithFlag(uint8_t *view, int16_t *coordinate, uint8_t *flags, size_t pointCount, uint8_t X_Y) {

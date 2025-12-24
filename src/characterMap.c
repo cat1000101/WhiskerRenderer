@@ -1,6 +1,9 @@
+#include "stddef.h"
+#include "stdint.h"
+
 #include "characterMap.h"
-#include "parser.h"
 #include "utils.h"
+#include "whiskerRendererTypes.h"
 
 uint16_t getGlyphIndex(W_Parser *parser, uint16_t c) {
     size_t format = ((IdentifyFormat *)parser->tables.cmap.cmapFormat)->format;

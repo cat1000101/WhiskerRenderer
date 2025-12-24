@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-// #include "raylib.h"
-
 #include "characterMap.h"
 #include "glyf.h"
-#include "parser.h"
 #include "utils.h"
+#include "whiskerRendererTypes.h"
 
 void headFromTD(W_Parser *parser, TableDirectory headTD) {
     Head *table = (Head *)(&parser->fontFile.data[headTD.offset]);
@@ -225,22 +223,10 @@ int checkFont(MappedFile fontFile, W_Parser *result) {
     return 0;
 }
 
-W_Font *parseFont(MappedFile fontFile) {
-    W_Parser parser = (W_Parser){0};
+int deserializedFont(MappedFile fontFile, W_Parser *parser) {
     printf("meow\n");
-    if (checkFont(fontFile, &parser)) return NULL;
-    if (setTables(&parser)) return NULL;
+    if (checkFont(fontFile, parser)) return 1;
+    if (setTables(parser)) return 1;
 
-    // const int screenWidth = 800;
-    // const int screenHeight = 600;
-    // InitWindow(screenWidth, screenHeight, "WhiskerRenderer");
-    // while (!WindowShouldClose()) {
-    // BeginDrawing();
-    // ClearBackground(RAYWHITE);
-    // DrawText("Welcome to Raylib", 190, 200, 20, LIGHTGRAY);
-    // EndDrawing();
-    // }
-    // CloseWindow();
-
-    return NULL;
+    return 0;
 }

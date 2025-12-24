@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "parser.h"
+#include "whiskerRendererTypes.h"
 
 typedef enum {
     PLATFORMS_UNICODE = 0,   // Indicates Unicode version.

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "parser.h"
+#include "whiskerRendererTypes.h"
 
 typedef struct {
     // If the number of contours is positive or zero, it is a single glyph;

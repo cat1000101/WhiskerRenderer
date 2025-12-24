@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <sys/mman.h>
 
-#include "parser.h"
+#include "whiskerRenderer.h"
 #include "renderer.h"
 #include "utils.h"
 

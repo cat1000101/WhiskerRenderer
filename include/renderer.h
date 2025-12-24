@@ -1,7 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "parser.h"
+#include "whiskerRendererTypes.h"
+#include "whiskerRenderer.h"
 
 int drawString(W_Font *font, char *character);
 
