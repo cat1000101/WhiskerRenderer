@@ -38,10 +38,11 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     size_t i = 0;
 
     if (!glyfSize) {
-        ERROR_OUT("empty glyf");
+        // ERROR_OUT("empty glyf, need to implement empty length thingy");
+        return 1;
     }
 
-    glyfResult->contourNum = read_int16_t_endian(tempView);
+    int16_t tempContourNum = read_int16_t_endian(tempView);
     glyfResult->boundingBox.xMin = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, xMin)]);
     glyfResult->boundingBox.yMin = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, yMin)]);
     glyfResult->boundingBox.xMax = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, xMax)]);
@@ -49,13 +50,15 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     glyfResult->charValue = charValue;
     tempView += sizeof(GlyphDescription);
 
-    // printf("glyf %c:contour number: %zd, bounding box: (%d, %d)min (%d, %d)max sizeof glyf: %zd, index: %zd\n",
-    // (char)glyfResult->charValue, glyfResult->contourNum, glyfResult->boundingBox.xMin,
+    // printf("glyf %c:contour number: %d, bounding box: (%d, %d)min (%d, %d)max sizeof glyf: %zd, index: %zd\n",
+    // (char)glyfResult->charValue, tempContourNum, glyfResult->boundingBox.xMin,
     // glyfResult->boundingBox.yMin, glyfResult->boundingBox.xMax, glyfResult->boundingBox.yMax, glyfSize, index);
 
-    if (glyfResult->contourNum < 0) {
-        ERROR_OUT("Component glyfs not implemented");
+    if (tempContourNum < 0) {
+        // ERROR_OUT("Component glyfs not implemented");
+        return 1;
     }
+    glyfResult->contourNum = tempContourNum;
 
     uint16_t *endPtsOfContours = SAFE_MALLOC(sizeof(uint16_t) * glyfResult->contourNum);
     for (i = 0; i < glyfResult->contourNum; i++) {
@@ -105,9 +108,13 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
 
 int glyfFromTD(W_Parser *parser, TableDirectory glyfTD) {
     parser->tables.glyf.glyfStartOffset = glyfTD.offset;
-    SimpleGlyfChar tempGlyfChar = {0};
-    if (parseGlyf(parser, 'a', &tempGlyfChar)) {
-        printf("parseGlyf failed\n");
+    parser->tables.glyf.chars = SAFE_MALLOC(sizeof(SimpleGlyfChar) * 256); // 256 ascii chars
+    parser->tables.glyf.charNum = 256;
+    for (size_t i = 0; i < parser->tables.glyf.charNum; i++) {
+        if (parseGlyf(parser, i, &parser->tables.glyf.chars[i])) {
+            // printf("glyf for '%zd' not found\n", i);
+            memcpy(&parser->tables.glyf.chars[i], &parser->tables.glyf.chars[0], sizeof(SimpleGlyfChar));
+        }
     }
 
     return 0;
