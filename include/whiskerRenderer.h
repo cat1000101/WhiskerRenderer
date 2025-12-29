@@ -9,5 +9,10 @@ typedef struct {
 } W_Font;
 
 W_Font *parseFont(MappedFile fontFile);
+int drawString(W_Font *font, char *characters);
+
+int parseArgs(int argc, char *argv[]);
+int mapFile(int fd, MappedFile *mappedFile);
+void unmapFile(MappedFile mf);
 
 #endif

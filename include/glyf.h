@@ -33,13 +33,13 @@ typedef enum {
     OUTLINE_FLAGS_REPEAT = 1 << 3,
     // (Positive x-Short vector)
     // This flag has one of two meanings, depending on how the x-Short Vector flag is set.
-    // If the x-Short Vector bit is set, this bit describes the sign of the value, with a value of 1 equalling positive and a zero value negative.
+    // If the x-Short Vector bit is set, this bit describes the sign of the value, with a value of 1 equaling positive and a zero value negative.
     // If the x-short Vector bit is not set, and this bit is set, then the current x-coordinate is the same as the previous x-coordinate.
     // If the x-short Vector bit is not set, and this bit is not set, the current x-coordinate is a signed 16-bit delta vector. In this case, the delta vector is the change in x
     OUTLINE_FLAGS_THIS_X_IS_SAME = 1 << 4,
     // (Positive y-Short vector)
     // This flag has one of two meanings, depending on how the y-Short Vector flag is set.
-    // If the y-Short Vector bit is set, this bit describes the sign of the value, with a value of 1 equalling positive and a zero value negative.
+    // If the y-Short Vector bit is set, this bit describes the sign of the value, with a value of 1 equaling positive and a zero value negative.
     // If the y-short Vector bit is not set, and this bit is set, then the current y-coordinate is the same as the previous y-coordinate.
     // If the y-short Vector bit is not set, and this bit is not set, the current y-coordinate is a signed 16-bit delta vector. In this case, the delta vector is the change in y
     OUTLINE_FLAGS_THIS_Y_IS_SAME = 1 << 5,

@@ -1,5 +1,3 @@
 #include "renderer.h"
 
-int drawString(W_Font *font, char *character) {
-    return 0;
-}
+int drawString_i(W_Font *font, char *character) { return 0; }

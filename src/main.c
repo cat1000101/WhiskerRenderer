@@ -1,8 +1,7 @@
 #include <stdio.h>
 
 #include "whiskerRenderer.h"
-#include "renderer.h"
-#include "utils.h"
+#include "whiskerRendererTypes.h"
 
 int main(int argc, char *argv[]) {
     int fontFile = parseArgs(argc, argv);

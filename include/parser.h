@@ -15,6 +15,6 @@ typedef struct {
 } OffsetSubTable;
 
 size_t getGlyfOffset(W_Parser *parser, size_t index);
-int deserializedFont(MappedFile fontFile, W_Parser *parser);
+int parseFont_i(MappedFile fontFile, W_Parser *parser);
 
 #endif

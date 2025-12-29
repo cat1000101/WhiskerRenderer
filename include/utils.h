@@ -7,8 +7,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "whiskerRendererTypes.h"
-
 #define UNUSED(x) (void)(x)
 #define TODO(message)                                                      \
     do {                                                                   \
@@ -116,8 +114,4 @@ static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> ind
         v->cap = 0;                                              \
     }
 
-void usage(const char *name);
-int parseArgs(int argc, char *argv[]);
-int mapFile(int fd, MappedFile *mappedFile);
-void unmapFile(MappedFile mf);
 #endif
