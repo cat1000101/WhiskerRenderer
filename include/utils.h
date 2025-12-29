@@ -88,13 +88,13 @@ static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> ind
         size_t cap;                                              \
     } name;                                                      \
                                                                  \
-    static void name##_init(name *v) {                           \
+    static inline void name##_init(name *v) {                    \
         v->data = NULL;                                          \
         v->len = 0;                                              \
         v->cap = 0;                                              \
     }                                                            \
                                                                  \
-    static void name##_push(name *v, type value) {               \
+    static inline void name##_push(name *v, type value) {        \
         if (v->len == v->cap) {                                  \
             v->cap = v->cap ? v->cap * 2 : 16;                   \
             type *tmp = realloc(v->data, v->cap * sizeof(type)); \
@@ -107,11 +107,14 @@ static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> ind
         v->data[v->len++] = value;                               \
     }                                                            \
                                                                  \
-    static void name##_free(name *v) {                           \
+    static inline void name##_free(name *v) {                    \
         free(v->data);                                           \
         v->data = NULL;                                          \
         v->len = 0;                                              \
         v->cap = 0;                                              \
     }
+
+CREATE_VEC(i16Vec, int16_t)
+CREATE_VEC(u8Vec, uint8_t)
 
 #endif

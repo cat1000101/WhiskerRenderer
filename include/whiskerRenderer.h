@@ -3,6 +3,8 @@
 
 #include "whiskerRendererTypes.h"
 
+#define RESOLUTION 20
+
 typedef struct {
     char *name;
     W_Parser parser;

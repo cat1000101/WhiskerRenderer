@@ -7,51 +7,54 @@
 
 #include "raylib.h"
 
-// p(t) = (1-t)2p0 + 2t(1-t)p1 + t2p2
 typedef struct {
-    int x;
-    int y;
-    int onContour;
+    float x;
+    float y;
 } Point;
-Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index) {
+Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index, float scale) {
     Point result = {0};
-    if (contourNum > glyf->contourNum) {
-        printf("wtf contour num too big\n");
-        return result;
-    }
-    if (index > glyf->contours[contourNum].length + 1) {
-        printf("wtf index too big\n");
-        return result;
-    }
-    if (index == glyf->contours[contourNum].length) index = 0;
+    index = index % glyf->contours[contourNum].length;
     result.x = glyf->contours[contourNum].xFontUnit[index] - glyf->boundingBox.xMin;
     result.y = glyf->boundingBox.yMax - (glyf->contours[contourNum].yFontUnit[index] - glyf->boundingBox.yMin);
-    result.onContour = glyf->contours[contourNum].flags[index] & 0b1;
     return result;
+}
+
+// p(t) = (1-t)^2 * p0 + 2t(1-t)p1 + t^2 * p2
+Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
+    Point result = {0};
+    result.x = (p0.x * (1 - t) * (1 - t)) + (2 * t * p1.x * (1 - t)) + (t * t * p2.x);
+    result.y = (p0.y * (1 - t) * (1 - t)) + (2 * t * p1.y * (1 - t)) + (t * t * p2.y);
+    return result;
+}
+void drawCurve(Point p0, Point p1, Point p2) {
+    Point previous = p0;
+    Point next = {0};
+    float t = 0;
+    for (size_t i = 0; i < RESOLUTION; i++) {
+        t = (i + 1.0f) / RESOLUTION;
+        next = bezierInterpolation(p0, p1, p2, t);
+        DrawLine(previous.x + 50, previous.y + 50, next.x + 50, next.y + 50, SKYBLUE);
+        previous = next;
+    }
 }
 
 int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
     SimpleGlyfChar glyf = font->parser.tables.glyf.chars[c];
     float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
-    float width = (glyf.boundingBox.xMax - glyf.boundingBox.xMin) * scale;
-    float hight = (glyf.boundingBox.yMax - glyf.boundingBox.yMin) * scale;
-    printf("rendering '%c': scale %f width/hight %f/%f\n", c, scale, width, hight);
+    // float width = (glyf.boundingBox.xMax - glyf.boundingBox.xMin) * scale;
+    // float hight = (glyf.boundingBox.yMax - glyf.boundingBox.yMin) * scale;
+    // printf("rendering '%c': scale %f width/hight %f/%f\n", c, scale, width, hight);
 
     for (size_t i = 0; i < glyf.contourNum; i++) {
-        for (size_t j = 0; j < glyf.contours[i].length; j++) {
-            Point current = getAbsoluteXY(&glyf, i, j);
-            Point next = getAbsoluteXY(&glyf, i, j + 1);
-            int xAbsolute = current.x;
-            int yAbsolute = current.y;
-            int nextXAbsolute = next.x;
-            int nextYAbsolute = next.y;
+        for (size_t j = 0; j < glyf.contours[i].length; j += 2) {
+            Point current = getAbsoluteXY(&glyf, i, j, scale);
+            Point outside = getAbsoluteXY(&glyf, i, j + 1, scale);
+            Point next = getAbsoluteXY(&glyf, i, j + 2, scale);
 
-            if (current.onContour) {
-                DrawCircle(xAbsolute + 50, yAbsolute + 50, 5, RED);
-            } else {
-                DrawCircle(xAbsolute + 50, yAbsolute + 50, 5, YELLOW);
-            }
-            DrawLine(xAbsolute + 50, yAbsolute + 50, nextXAbsolute + 50, nextYAbsolute + 50, SKYBLUE);
+            DrawCircle(current.x + 50, current.y + 50, 5, RED);
+            DrawCircle(outside.x + 50, outside.y + 50, 2, PINK);
+
+            drawCurve(current, outside, next);
         }
     }
 

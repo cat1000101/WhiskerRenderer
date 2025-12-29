@@ -97,14 +97,45 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
 
     glyfResult->contours = SAFE_MALLOC(sizeof(struct Contours) * glyfResult->contourNum);
     uint16_t startPoint = 0;
+    size_t j = 0;
+    i16Vec xVec = {0};
+    i16Vec yVec = {0};
+    u8Vec flagVec = {0};
+    uint8_t nextFlag;
+    int16_t currX, currY, nextX, nextY, contourLength;
     for (i = 0; i < glyfResult->contourNum; i++) {
-        glyfResult->contours[i].flags = &flags[startPoint];
-        glyfResult->contours[i].xFontUnit = &xPoints[startPoint];
-        glyfResult->contours[i].yFontUnit = &yPoints[startPoint];
-        glyfResult->contours[i].length = endPtsOfContours[i] - startPoint + 1;
+        i16Vec_init(&xVec);
+        i16Vec_init(&yVec);
+        u8Vec_init(&flagVec);
+        contourLength = endPtsOfContours[i] - startPoint + 1;
+        for (j = 0; j < contourLength; j++) {
+            currX = xPoints[startPoint + j];
+            currY = yPoints[startPoint + j];
+            nextFlag = flags[startPoint + j + 1];
+            i16Vec_push(&xVec, currX);
+            i16Vec_push(&yVec, currY);
+            u8Vec_push(&flagVec, flags[startPoint + j]);
+
+            if ((flagVec.data[flagVec.len - 1] & 1) == (nextFlag & 1)) {
+                nextX = xPoints[startPoint + ((j + 1) % contourLength)];
+                nextY = yPoints[startPoint + ((j + 1) % contourLength)];
+                i16Vec_push(&xVec, (currX + nextX) / 2);
+                i16Vec_push(&yVec, (currY + nextY) / 2);
+                u8Vec_push(&flagVec, 1 - (nextFlag & 1));
+            }
+        }
+
+        glyfResult->contours[i].flags = flagVec.data;
+        glyfResult->contours[i].xFontUnit = xVec.data;
+        glyfResult->contours[i].yFontUnit = yVec.data;
+        glyfResult->contours[i].length = yVec.len;
         // printf("contour %zd: startPts %d, endPts %d, length %d\n", i, startPoint, endPtsOfContours[i], endPtsOfContours[i] - startPoint + 1);
         startPoint = endPtsOfContours[i] + 1;
     }
+    free(flags);
+    free(xPoints);
+    free(yPoints);
+    free(endPtsOfContours);
     return 0;
 }
 
