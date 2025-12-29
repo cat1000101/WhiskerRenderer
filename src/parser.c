@@ -223,7 +223,7 @@ int checkFont(MappedFile fontFile, W_Parser *result) {
     return 0;
 }
 
-int deserializedFont(MappedFile fontFile, W_Parser *parser) {
+int parseFont_i(MappedFile fontFile, W_Parser *parser) {
     printf("meow\n");
     if (checkFont(fontFile, parser)) return 1;
     if (setTables(parser)) return 1;

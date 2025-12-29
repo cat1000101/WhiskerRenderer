@@ -99,8 +99,8 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     uint16_t startPoint = 0;
     for (i = 0; i < glyfResult->contourNum; i++) {
         glyfResult->contours[i].flags = &flags[startPoint];
-        glyfResult->contours[i].x = &xPoints[startPoint];
-        glyfResult->contours[i].y = &yPoints[startPoint];
+        glyfResult->contours[i].xFontUnit = &xPoints[startPoint];
+        glyfResult->contours[i].yFontUnit = &yPoints[startPoint];
         glyfResult->contours[i].length = endPtsOfContours[i] - startPoint + 1;
         // printf("contour %zd: startPts %d, endPts %d, length %d\n", i, startPoint, endPtsOfContours[i], endPtsOfContours[i] - startPoint + 1);
         startPoint = endPtsOfContours[i] + 1;

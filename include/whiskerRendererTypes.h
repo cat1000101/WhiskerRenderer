@@ -94,6 +94,13 @@ typedef struct {
 // clang-format on
 
 typedef struct {
+    uint8_t *bitmap;
+    int width, height;
+    float advanceWidth;
+    float leftSideBearing;
+} GlyphBitmap;
+
+typedef struct {
     struct {
         int16_t xMin;
         int16_t yMin;
@@ -103,8 +110,8 @@ typedef struct {
     size_t contourNum;
     struct Contours {
         size_t length;
-        int16_t *x;
-        int16_t *y;
+        int16_t *xFontUnit;
+        int16_t *yFontUnit;
         uint8_t *flags;
     } *contours;
     size_t charValue;
