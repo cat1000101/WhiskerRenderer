@@ -14,8 +14,12 @@ typedef struct {
 Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index, float scale) {
     Point result = {0};
     index = index % glyf->contours[contourNum].length;
-    result.x = glyf->contours[contourNum].xFontUnit[index] - glyf->boundingBox.xMin;
-    result.y = glyf->boundingBox.yMax - (glyf->contours[contourNum].yFontUnit[index] - glyf->boundingBox.yMin);
+    result.x = (glyf->contours[contourNum].xFontUnit[index] - glyf->boundingBox.xMin) * scale;
+    result.y =
+        (glyf->boundingBox.yMax - (glyf->contours[contourNum].yFontUnit[index] - glyf->boundingBox.yMin)) * scale;
+    // printf("contour/index: %zd/%zd orig: (%d, %d) transformed: (%f, %f) onContour: %d\n", contourNum, index,
+    //        glyf->contours[contourNum].xFontUnit[index], glyf->contours[contourNum].yFontUnit[index], result.x, result.y,
+    //        glyf->contours[contourNum].flags[index] & 1);
     return result;
 }
 
@@ -40,10 +44,14 @@ void drawCurve(Point p0, Point p1, Point p2) {
 
 int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
     SimpleGlyfChar glyf = font->parser.tables.glyf.chars[c];
-    float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
-    // float width = (glyf.boundingBox.xMax - glyf.boundingBox.xMin) * scale;
-    // float hight = (glyf.boundingBox.yMax - glyf.boundingBox.yMin) * scale;
-    // printf("rendering '%c': scale %f width/hight %f/%f\n", c, scale, width, hight);
+    // float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
+    float scale = 500.0f / (glyf.boundingBox.yMax - glyf.boundingBox.yMin);
+    // float scale = 1;
+    float width = (glyf.boundingBox.xMax - glyf.boundingBox.xMin) * scale;
+    float hight = (glyf.boundingBox.yMax - glyf.boundingBox.yMin) * scale;
+    printf("rendering '%c': scale %f width/hight %f/%f min(%f, %f) max(%f, %f)\n", c, scale, width, hight,
+           (float)glyf.boundingBox.xMin, (float)glyf.boundingBox.yMin, (float)glyf.boundingBox.xMax,
+           (float)glyf.boundingBox.yMax);
 
     for (size_t i = 0; i < glyf.contourNum; i++) {
         for (size_t j = 0; j < glyf.contours[i].length; j += 2) {
@@ -64,12 +72,11 @@ int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
 int drawString_i(W_Font *font, char *character) {
     int width = 900;
     int hight = 600;
-    printf("max width/hight %d/%d\n", width, hight);
     InitWindow(width, hight, "testing fonts");
     // while (!WindowShouldClose()) {}
     BeginDrawing();
     ClearBackground(RAYWHITE);
-    renderCharBitmap(font, 'a', 42);
+    renderCharBitmap(font, 'B', 42);
     EndDrawing();
 
     while (1) {

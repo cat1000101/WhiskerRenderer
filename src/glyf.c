@@ -67,6 +67,7 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
         endPtsOfContours[i] = read_uint16_t_endian(&tempView[i * sizeof(uint16_t)]);
     }
     tempView += sizeof(uint16_t) * glyfResult->contourNum;
+
     // instructions, i am not implementing that for now
     tempView += sizeof(uint16_t) + read_uint16_t_endian(tempView);
 
@@ -76,6 +77,11 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     int16_t *xPoints = SAFE_MALLOC(sizeof(int16_t) * pointCount);
     int16_t *yPoints = SAFE_MALLOC(sizeof(int16_t) * pointCount);
 
+    // if (getPrintChar((char)charValue))
+    //     printf("%c\n", (char)charValue);
+    // else
+    //     printf("not printable\n");
+
     size_t flagsToParse = pointCount;
     uint8_t flag = 0;
     uint8_t repeat = 0;
@@ -83,7 +89,7 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     while (flagsToParse > 0) {
         flag = tempView[i++];
         if (isFlagBitSet(flag, 3)) {
-            flag = flag & (~OUTLINE_FLAGS_REPEAT);
+            // flag = flag & (~OUTLINE_FLAGS_REPEAT);
             for (repeat = tempView[i++] + 1; repeat > 0; repeat--) {
                 flags[pointCount - flagsToParse--] = flag;
             }
@@ -91,7 +97,7 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
             flags[pointCount - flagsToParse--] = flag;
         }
     }
-    tempView += sizeof(uint8_t) * pointCount;
+    tempView += sizeof(uint8_t) * i;
     tempView += parseCordinateWithFlag(tempView, xPoints, flags, pointCount, 0);
     tempView += parseCordinateWithFlag(tempView, yPoints, flags, pointCount, 1);
 

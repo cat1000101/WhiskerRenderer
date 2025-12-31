@@ -63,6 +63,12 @@ READ_TYPE_ENDIAN(int16_t)
 READ_TYPE_ENDIAN(uint32_t)
 READ_TYPE_ENDIAN(int32_t)
 
+static inline char getPrintChar(char c) {
+    if ((c >= 32 && c <= 64) || (c >= 91 && c <= 96) || (c >= 123 && c <= 126))
+        return c;
+    else
+        return 0;
+}
 static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> index) & 1) == 1; }
 
 #define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
