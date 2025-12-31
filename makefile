@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -Wall -Werror -Iinclude -L/usr/lib64 -I/usr/include
-LDFLAGS = -lraylib
+LDFLAGS = -lraylib -lm
 
 SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)

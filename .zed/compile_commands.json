@@ -5,6 +5,7 @@
             "-g",
             "-Wall",
             "-Werror",
+            "-lm",
             "-Iinclude",
             "-I/usr/include",
             "-c",
