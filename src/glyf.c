@@ -117,7 +117,7 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
         for (j = 0; j < contourLength; j++) {
             currX = xPoints[startPoint + j];
             currY = yPoints[startPoint + j];
-            nextFlag = flags[startPoint + j + 1];
+            nextFlag = flags[startPoint + ((j + 1) % contourLength)];
             i16Vec_push(&xVec, currX);
             i16Vec_push(&yVec, currY);
             u8Vec_push(&flagVec, flags[startPoint + j]);
