@@ -8,6 +8,7 @@ OBJS = $(SRCS:src/%.c=$(BUILD_DIR)/%.o)
 BUILD_DIR = build
 
 TARGET = $(BUILD_DIR)/WhiskerRenderer
+TEST_FONT = Dosis-VariableFont_wght.ttf
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -22,6 +23,6 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 
 run: $(TARGET)
-	./$(TARGET) Dosis-VariableFont_wght.ttf
+	./$(TARGET) $(TEST_FONT)
 
 .PHONY: clean run

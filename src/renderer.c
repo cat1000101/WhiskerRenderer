@@ -18,8 +18,8 @@ Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index, float
     result.y =
         (glyf->boundingBox.yMax - (glyf->contours[contourNum].yFontUnit[index] - glyf->boundingBox.yMin)) * scale;
     // printf("contour/index: %zd/%zd orig: (%d, %d) transformed: (%f, %f) onContour: %d\n", contourNum, index,
-    //        glyf->contours[contourNum].xFontUnit[index], glyf->contours[contourNum].yFontUnit[index], result.x, result.y,
-    //        glyf->contours[contourNum].flags[index] & 1);
+    // glyf->contours[contourNum].xFontUnit[index], glyf->contours[contourNum].yFontUnit[index], result.x, result.y,
+    // glyf->contours[contourNum].flags[index] & 1);
     return result;
 }
 
@@ -59,7 +59,7 @@ int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
             Point outside = getAbsoluteXY(&glyf, i, j + 1, scale);
             Point next = getAbsoluteXY(&glyf, i, j + 2, scale);
 
-            DrawCircle(current.x + 50, current.y + 50, 5, RED);
+            DrawCircle(current.x + 50, current.y + 50, 3, RED);
             DrawCircle(outside.x + 50, outside.y + 50, 2, PINK);
 
             drawCurve(current, outside, next);
