@@ -64,7 +64,7 @@ READ_TYPE_ENDIAN(uint32_t)
 READ_TYPE_ENDIAN(int32_t)
 
 static inline char getPrintChar(char c) {
-    if ((c >= 32 && c <= 64) || (c >= 91 && c <= 96) || (c >= 123 && c <= 126))
+    if ((c >= 32 && c <= 126))
         return c;
     else
         return 0;
@@ -72,6 +72,10 @@ static inline char getPrintChar(char c) {
 static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> index) & 1) == 1; }
 
 #define OFFSET_OF(type, member) ((size_t)&(((type *)0)->member))
+
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define ABS(x) ((x < 0) ? -(x) : (x))
 
 #define STR2(x) #x
 #define STR(x) STR2(x)

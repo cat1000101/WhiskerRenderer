@@ -2,8 +2,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "renderer.h"
+#include "utils.h"
 #include "whiskerRenderer.h"
 #include "whiskerRendererTypes.h"
 
@@ -31,23 +33,10 @@ Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
     result.y = (p0.y * (1 - t) * (1 - t)) + (2 * t * p1.y * (1 - t)) + (t * t * p2.y);
     return result;
 }
-
-void drawCurve(Point p0, Point p1, Point p2) {
-    Point previous = p0;
-    Point next = {0};
-    float t = 0;
-    for (size_t i = 0; i < RESOLUTION; i++) {
-        t = (i + 1.0f) / RESOLUTION;
-        next = bezierInterpolation(p0, p1, p2, t);
-        DrawLine(previous.x + 50, previous.y + 50, next.x + 50, next.y + 50, SKYBLUE);
-        previous = next;
-    }
-}
-
 // t = (-b +- sqrt(b^2 - 4ac)) / 2a
 Point quadraticRoot(float a, float b, float c) {
     Point result = {NAN, NAN};
-    if (a < 0.0001 && a > -0.0001) {
+    if (ABS(a) < 0.0001) {
         if (b != 0) {
             result.x = -c / b;
         }
@@ -67,12 +56,12 @@ int isIntersecting(Point p0, Point p1, Point p2, Point ray) {
     float c = p0.y;
     Point quadResult = quadraticRoot(a, b, c - ray.y);
     int collisionCount = 0;
-    if ((quadResult.x >= 0 && quadResult.x < 1) && !isnan(quadResult.x)) {
-        if (bezierInterpolation(p0, p1, p2, quadResult.x).x > ray.x) collisionCount++;
-    }
-    if (quadResult.y >= 0 && quadResult.y < 1 && !isnan(quadResult.y)) {
-        if (bezierInterpolation(p0, p1, p2, quadResult.y).x > ray.x) collisionCount++;
-    }
+    int valid1 = (quadResult.x >= 0 && quadResult.x < 1) && bezierInterpolation(p0, p1, p2, quadResult.x).x > ray.x;
+    int valid2 = (quadResult.y >= 0 && quadResult.y < 1) && bezierInterpolation(p0, p1, p2, quadResult.y).x > ray.x;
+
+    if (valid1) collisionCount++;
+    if (valid2) collisionCount++;
+
     return collisionCount;
 }
 int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
@@ -85,6 +74,9 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             outside = getAbsoluteXY(glyf, i, j + 1, scale);
             next = getAbsoluteXY(glyf, i, j + 2, scale);
 
+            if (current.y > ray.y && outside.y >= ray.y && next.y > ray.y) continue;
+            if (current.y < ray.y && outside.y <= ray.y && next.y < ray.y) continue;
+
             collisionCount += isIntersecting(current, outside, next, ray);
         }
     }
@@ -92,20 +84,85 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
     return (collisionCount % 2) == 1;
 }
 
-int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
-    SimpleGlyfChar *glyf = &font->parser.tables.glyf.chars[c];
-    // float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
-    float scale = 500.0f / (glyf->boundingBox.yMax - glyf->boundingBox.yMin);
-    // float scale = 1;
-    float width = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
-    uint16_t width_u16 = (uint16_t)(width + 0.5f);
-    float hight = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
-    uint16_t hight_u16 = (uint16_t)(hight + 0.5f);
-    printf("rendering '%c': scale %f width/hight %f/%f min(%f, %f) max(%f, %f)\n", c, scale, width, hight,
-           (float)glyf->boundingBox.xMin, (float)glyf->boundingBox.yMin, (float)glyf->boundingBox.xMax,
-           (float)glyf->boundingBox.yMax);
+void drawCurve(Point p0, Point p1, Point p2) {
+    Point previous = p0;
+    Point next = {0};
+    float t = 0;
+    for (size_t i = 0; i < RESOLUTION; i++) {
+        t = (i + 1.0f) / RESOLUTION;
+        next = bezierInterpolation(p0, p1, p2, t);
+        DrawLine(previous.x + 50, previous.y + 50, next.x + 50, next.y + 50, SKYBLUE);
+        previous = next;
+    }
+}
 
+charBitmap rasterizeCharBitmap(W_Font *font, uint8_t c, size_t px) {
+    SimpleGlyfChar *glyf = &font->parser.tables.glyf.chars[c];
+    float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
+    uint16_t width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
+    size_t width = (uint16_t)(width_f32 + 0.5f);
+    uint16_t hight_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
+    size_t hight = (uint16_t)(hight_f32 + 0.5f);
+    // printf("rendering '%c': scale %f width/hight %f/%f min(%f, %f) max(%f, %f)\n", c, scale, width_f32, hight_f32,
+    // (float)glyf->boundingBox.xMin, (float)glyf->boundingBox.yMin, (float)glyf->boundingBox.xMax,
+    // (float)glyf->boundingBox.yMax);
     size_t i, j;
+    uint8_t *bitmap = SAFE_MALLOC(width * hight);
+    memset(bitmap, 0, width * hight);
+
+    for (i = 0; i < hight; i++) {
+        for (j = 0; j < width; j++) {
+            if (isInsideGlyf(glyf, (Point){(float)j, (float)i}, scale)) {
+                bitmap[i * width + j] = 0xFF;
+            }
+        }
+    }
+
+    return (charBitmap){.bitmap = bitmap, .hight = hight, .width = width};
+}
+
+void drawBitmap(charBitmap bitmap, size_t px, size_t scale) {
+    size_t i, j, dx, dy;
+    for (i = 0; i < bitmap.hight; i++) {
+        for (j = 0; j < bitmap.width; j++) {
+            Color color;
+            switch (bitmap.bitmap[i * bitmap.width + j]) {
+            case 0xFF:
+                color = BLACK;
+                break;
+            case 0x80:
+                color = RED;
+                break;
+            case 0x40:
+                color = PINK;
+                break;
+            default:
+                color = RAYWHITE;
+            }
+            dx = j * scale + 50;
+            dy = i * scale + 50;
+            DrawRectangle(dx, dy, scale, scale, color);
+        }
+    }
+}
+
+void drawChar(W_Font *font, uint8_t c, size_t px) {
+    SimpleGlyfChar *glyf = &font->parser.tables.glyf.chars[c];
+    float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
+    uint16_t width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
+    size_t width = (uint16_t)(width_f32 + 0.5f);
+    uint16_t hight_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
+    size_t hight = (uint16_t)(hight_f32 + 0.5f);
+    size_t i, j;
+
+    for (i = 0; i < hight; i++) {
+        for (j = 0; j < width; j++) {
+            if (isInsideGlyf(glyf, (Point){(float)j, (float)i}, scale)) {
+                DrawPixel(j + 50, i + 50, BLACK);
+            }
+        }
+    }
+
     for (i = 0; i < glyf->contourNum; i++) {
         for (j = 0; j < glyf->contours[i].length; j += 2) {
             Point current = getAbsoluteXY(glyf, i, j, scale);
@@ -118,30 +175,31 @@ int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
             drawCurve(current, outside, next);
         }
     }
-    // uint8_t *bitmap = SAFE_MALLOC(width_u16 * hight_u16);
-    for (i = 0; i < width_u16; i++) {
-        for (j = 0; j < hight_u16; j++) {
-            if (isInsideGlyf(glyf, (Point){(float)i, (float)j}, scale)) {
-                DrawPixel(i + 50, j + 50, BLACK);
-            }
-        }
-    }
-
-    return 0;
 }
 
 int drawString_i(W_Font *font, char *character) {
-    int width = 900;
-    int hight = 600;
-    InitWindow(width, hight, "testing fonts");
-    // while (!WindowShouldClose()) {}
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-    renderCharBitmap(font, 'a', 42);
-    EndDrawing();
+    // charBitmap *bitmaps = SAFE_MALLOC(sizeof(charBitmap) * 256);
+    // for (size_t i = 0; i < 256; i++) {
+    // if (!getPrintChar(i)) continue;
+    // bitmaps[i] = rasterizeCharBitmap(font, i, 300);
+    // }
 
-    while (1) {
+    char tmp, key = 'a';
+
+    int width = 1200;
+    int hight = 800;
+    InitWindow(width, hight, "testing fonts");
+    while (!WindowShouldClose()) {
+        tmp = GetCharPressed();
+        key = tmp ? tmp : key;
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        // drawBitmap(bitmaps[(uint8_t)key], 300, 2);
+        drawChar(font, (uint8_t)key, 800);
+        EndDrawing();
     }
+
     CloseWindow();
 
     return 0;

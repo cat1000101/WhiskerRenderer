@@ -33,7 +33,7 @@ size_t parseCordinateWithFlag(uint8_t *view, int16_t *coordinate, uint8_t *flags
 }
 
 int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
-    size_t index = getGlyphIndex(parser, (uint16_t)charValue);
+    size_t index = charValue ? getGlyphIndex(parser, (uint16_t)charValue) : 0;
     size_t glyfOffset = getGlyfOffset(parser, index);
     size_t glyfSize = getGlyfOffset(parser, index + 1) - glyfOffset;
     uint8_t *tempView = &parser->fontFile.data[parser->tables.glyf.glyfStartOffset + glyfOffset];
@@ -78,9 +78,9 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     int16_t *yPoints = SAFE_MALLOC(sizeof(int16_t) * pointCount);
 
     // if (getPrintChar((char)charValue))
-    //     printf("%c\n", (char)charValue);
+    // printf("%c\n", (char)charValue);
     // else
-    //     printf("not printable\n");
+    // printf("not printable\n");
 
     size_t flagsToParse = pointCount;
     uint8_t flag = 0;
