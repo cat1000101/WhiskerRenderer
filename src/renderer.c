@@ -9,6 +9,9 @@
 
 #include "raylib.h"
 
+size_t number, counter;
+Vector2 mouse;
+
 typedef struct {
     float x;
     float y;
@@ -40,8 +43,12 @@ void drawCurve(Point p0, Point p1, Point p2) {
         t = (i + 1.0f) / RESOLUTION;
         next = bezierInterpolation(p0, p1, p2, t);
         DrawLine(previous.x + 50, previous.y + 50, next.x + 50, next.y + 50, SKYBLUE);
+        if (counter == number)
+            DrawLineEx((Vector2){previous.x + 50, previous.y + 50}, (Vector2){next.x + 50, next.y + 50}, 10, BLUE);
         previous = next;
     }
+    if (counter == number)
+        printf("curve start: (%f, %f) outside: (%f, %f) end: (%f, %f)\n", p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
 }
 
 // t = (-b +- sqrt(b^2 - 4ac)) / 2a
@@ -68,10 +75,22 @@ int isIntersecting(Point p0, Point p1, Point p2, Point ray) {
     Point quadResult = quadraticRoot(a, b, c - ray.y);
     int collisionCount = 0;
     if ((quadResult.x >= 0 && quadResult.x < 1) && !isnan(quadResult.x)) {
-        if (bezierInterpolation(p0, p1, p2, quadResult.x).x > ray.x) collisionCount++;
+        if (bezierInterpolation(p0, p1, p2, quadResult.x).x > ray.x) {
+            collisionCount++;
+            if (ray.x == (mouse.x - 50) && ray.y == (mouse.y - 50)) {
+                DrawCircle(bezierInterpolation(p0, p1, p2, quadResult.x).x + 50,
+                           bezierInterpolation(p0, p1, p2, quadResult.x).y + 50, 7, PURPLE);
+            }
+        }
     }
     if (quadResult.y >= 0 && quadResult.y < 1 && !isnan(quadResult.y)) {
-        if (bezierInterpolation(p0, p1, p2, quadResult.y).x > ray.x) collisionCount++;
+        if (bezierInterpolation(p0, p1, p2, quadResult.y).x > ray.x) {
+            collisionCount++;
+            if (ray.x == (mouse.x - 50) && ray.y == (mouse.y - 50)) {
+                DrawCircle(bezierInterpolation(p0, p1, p2, quadResult.y).x + 50,
+                           bezierInterpolation(p0, p1, p2, quadResult.y).y + 50, 7, PURPLE);
+            }
+        }
     }
     return collisionCount;
 }
@@ -116,8 +135,10 @@ int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
             DrawCircle(outside.x + 50, outside.y + 50, 2, PINK);
 
             drawCurve(current, outside, next);
+            counter++;
         }
     }
+    counter = 0;
     // uint8_t *bitmap = SAFE_MALLOC(width_u16 * hight_u16);
     for (i = 0; i < width_u16; i++) {
         for (j = 0; j < hight_u16; j++) {
@@ -134,14 +155,20 @@ int drawString_i(W_Font *font, char *character) {
     int width = 900;
     int hight = 600;
     InitWindow(width, hight, "testing fonts");
-    // while (!WindowShouldClose()) {}
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-    renderCharBitmap(font, 'a', 42);
-    EndDrawing();
 
-    while (1) {
+    while (!WindowShouldClose()) {
+        if (IsKeyPressed(KEY_N)) number++;
+        mouse = GetMousePosition();
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        renderCharBitmap(font, 'a', 42);
+        DrawLine(mouse.x, mouse.y, width, mouse.y, GREEN);
+
+        EndDrawing();
     }
+
     CloseWindow();
 
     return 0;
