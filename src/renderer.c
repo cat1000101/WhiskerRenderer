@@ -17,8 +17,7 @@ Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index, float
     Point result = {0};
     index = index % glyf->contours[contourNum].length;
     result.x = (glyf->contours[contourNum].xFontUnit[index] - glyf->boundingBox.xMin) * scale;
-    result.y =
-        (glyf->boundingBox.yMax - (glyf->contours[contourNum].yFontUnit[index] - glyf->boundingBox.yMin)) * scale;
+    result.y = (glyf->boundingBox.yMax - glyf->contours[contourNum].yFontUnit[index]) * scale;
     // printf("contour/index: %zd/%zd orig: (%d, %d) transformed: (%f, %f) onContour: %d\n", contourNum, index,
     // glyf->contours[contourNum].xFontUnit[index], glyf->contours[contourNum].yFontUnit[index], result.x, result.y,
     // glyf->contours[contourNum].flags[index] & 1);
