@@ -25,22 +25,6 @@ Point getAbsoluteXY(SimpleGlyfChar *glyf, size_t contourNum, size_t index, float
     return result;
 }
 
-// t = (-b +- sqrt(b^2 - 4ac)) / 2a
-Point quadraticRoot(float a, float b, float c) {
-    Point result = {NAN, NAN};
-    if (a < 0.0001 && a > 0.0001) {
-        if (b != 0) {
-            result.x = -c / b;
-        }
-    } else {
-        float sqrtPortion = (b * b) - (4 * a * c);
-        if (sqrtPortion >= 0) {
-            result.x = (-b + sqrt(sqrtPortion)) / (2 * a);
-            result.y = (-b - sqrt(sqrtPortion)) / (2 * a);
-        }
-    }
-    return result;
-}
 // p(t) = (1-t)^2 * p0 + 2t(1-t)p1 + t^2 * p2
 Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
     Point result = {0};
@@ -61,8 +45,28 @@ void drawCurve(Point p0, Point p1, Point p2) {
     }
 }
 
+// t = (-b +- sqrt(b^2 - 4ac)) / 2a
+Point quadraticRoot(float a, float b, float c) {
+    Point result = {NAN, NAN};
+    if (a < 0.0001 && a > -0.0001) {
+        if (b != 0) {
+            result.x = -c / b;
+        }
+    } else {
+        float sqrtPortion = (b * b) - (4 * a * c);
+        if (sqrtPortion >= 0) {
+            result.x = (-b + sqrt(sqrtPortion)) / (2 * a);
+            result.y = (-b - sqrt(sqrtPortion)) / (2 * a);
+        }
+    }
+    return result;
+}
+
 int isIntersecting(Point p0, Point p1, Point p2, Point ray) {
-    Point quadResult = quadraticRoot(p0.y + p2.y - (2 * p1.y), 2 * (p1.y - p0.y), p0.y - ray.y);
+    float a = p0.y + p2.y - (2 * p1.y);
+    float b = 2 * (p1.y - p0.y);
+    float c = p0.y;
+    Point quadResult = quadraticRoot(a, b, c - ray.y);
     int collisionCount = 0;
     if ((quadResult.x >= 0 && quadResult.x < 1) && !isnan(quadResult.x)) {
         if (bezierInterpolation(p0, p1, p2, quadResult.x).x > ray.x) collisionCount++;
@@ -90,24 +94,24 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
 }
 
 int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
-    SimpleGlyfChar glyf = font->parser.tables.glyf.chars[c];
+    SimpleGlyfChar *glyf = &font->parser.tables.glyf.chars[c];
     // float scale = (float)px / (float)font->parser.tables.head.unitsPerEm;
-    float scale = 500.0f / (glyf.boundingBox.yMax - glyf.boundingBox.yMin);
+    float scale = 500.0f / (glyf->boundingBox.yMax - glyf->boundingBox.yMin);
     // float scale = 1;
-    float width = (glyf.boundingBox.xMax - glyf.boundingBox.xMin) * scale;
+    float width = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
     uint16_t width_u16 = (uint16_t)(width + 0.5f);
-    float hight = (glyf.boundingBox.yMax - glyf.boundingBox.yMin) * scale;
+    float hight = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
     uint16_t hight_u16 = (uint16_t)(hight + 0.5f);
     printf("rendering '%c': scale %f width/hight %f/%f min(%f, %f) max(%f, %f)\n", c, scale, width, hight,
-           (float)glyf.boundingBox.xMin, (float)glyf.boundingBox.yMin, (float)glyf.boundingBox.xMax,
-           (float)glyf.boundingBox.yMax);
+           (float)glyf->boundingBox.xMin, (float)glyf->boundingBox.yMin, (float)glyf->boundingBox.xMax,
+           (float)glyf->boundingBox.yMax);
 
     size_t i, j;
-    for (i = 0; i < glyf.contourNum; i++) {
-        for (j = 0; j < glyf.contours[i].length; j += 2) {
-            Point current = getAbsoluteXY(&glyf, i, j, scale);
-            Point outside = getAbsoluteXY(&glyf, i, j + 1, scale);
-            Point next = getAbsoluteXY(&glyf, i, j + 2, scale);
+    for (i = 0; i < glyf->contourNum; i++) {
+        for (j = 0; j < glyf->contours[i].length; j += 2) {
+            Point current = getAbsoluteXY(glyf, i, j, scale);
+            Point outside = getAbsoluteXY(glyf, i, j + 1, scale);
+            Point next = getAbsoluteXY(glyf, i, j + 2, scale);
 
             DrawCircle(current.x + 50, current.y + 50, 3, RED);
             DrawCircle(outside.x + 50, outside.y + 50, 2, PINK);
@@ -118,7 +122,7 @@ int renderCharBitmap(W_Font *font, uint8_t c, size_t px) {
     // uint8_t *bitmap = SAFE_MALLOC(width_u16 * hight_u16);
     for (i = 0; i < width_u16; i++) {
         for (j = 0; j < hight_u16; j++) {
-            if (isInsideGlyf(&glyf, (Point){(float)i,(float)j},scale)) {
+            if (isInsideGlyf(glyf, (Point){(float)i, (float)j}, scale)) {
                 DrawPixel(i + 50, j + 50, BLACK);
             }
         }
