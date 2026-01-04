@@ -1,3 +1,4 @@
+#include <float.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -56,6 +57,9 @@ Point quadraticRoot(float a, float b, float c) {
 float deltaD(Point p0, Point p1) {
     float dx = SQR(p0.x - p1.x);
     float dy = SQR(p0.y - p1.y);
+    if (isnan(dx + dy)) {
+        return FLT_MAX;
+    }
     return dx + dy;
 }
 
@@ -71,13 +75,16 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             outside = getAbsoluteXY(glyf, i, j + 1, scale);
             next = getAbsoluteXY(glyf, i, j + 2, scale);
 
-            if (current.y > ray.y && outside.y >= ray.y && next.y > ray.y) continue;
-            if (current.y < ray.y && outside.y <= ray.y && next.y < ray.y) continue;
+            if ((current.y > ray.y && outside.y >= ray.y && next.y > ray.y)
+                || (current.y < ray.y && outside.y <= ray.y && next.y < ray.y)) {
+                previousAngle = 0.001 * (current.y + next.y - (2 * outside.y)) + 2 * (outside.y - current.y);
+                continue;
+            }
 
             float a = current.y + next.y - (2 * outside.y);
             float b = 2 * (outside.y - current.y);
             float c = current.y;
-            angle = 0.0001 * a + b;
+            angle = 0.001 * a + b;
             Point quadResult = quadraticRoot(a, b, c - ray.y);
 
             intersect0 = bezierInterpolation(current, outside, next, quadResult.x);
@@ -89,11 +96,13 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             // in case of a max/min? we don't want them
             if (quadResult.x == 0 && ALMOST_NUMBER(b, 0) == 0 && IS_NEGATIVE(angle) != IS_NEGATIVE(previousAngle)
                 && previousAngle != 0) {
-                goto continueBlock;
+                valid0 = 0;
+                valid1 = 0;
             }
             // in case of a (n*x - n*1)^2 that equals 1
             if (ABS(a - (c - ray.y)) < 1e-4f && ABS(a * 2 - -b) < 1e-4f) {
-                goto continueBlock;
+                valid0 = 0;
+                valid1 = 0;
             }
 
             if (valid0) {
@@ -109,40 +118,38 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                 DrawCircle(intersect0.x + 50, intersect0.y + 50, 5, PURPLE);
                 float distance = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
                 if (click && distance > 1e-5f) {
-                    printf(
-                        "0curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %.9g a/b/c %f/%f/%f, distance: %.9g\n",
-                        testCounter, intersect0.x, intersect0.y, ray.x, ray.y, current.x, current.y, outside.x,
-                        outside.y, next.x, next.y, quadResult.x, a, b, c, distance);
+                    printf("0curve %zd intersection point (%f, %f) with ray (%f, %f)\n"
+                           "in curve: (%f, %f) (%f, %f) (%f, %f) m %.9g pm %.9g\n"
+                           "quadResult %.9g a/b/c %f/%f/%f valid %d, distance: %.9g\n\n",
+                           testCounter, intersect0.x, intersect0.y, ray.x, ray.y, current.x, current.y, outside.x,
+                           outside.y, next.x, next.y, angle, previousAngle, quadResult.x, a, b, c, valid0, distance);
                 }
             }
             if (valid1 && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
                 DrawCircle(intersect1.x + 50, intersect1.y + 50, 5, PURPLE);
                 float distance = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
                 if (click && distance > 1e-5f) {
-                    printf(
-                        "1curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %.9g a/b/c %f/%f/%f, distance: %.9g\n",
-                        testCounter, intersect1.x, intersect1.y, ray.x, ray.y, current.x, current.y, outside.x,
-                        outside.y, next.x, next.y, quadResult.y, a, b, c, distance);
+                    printf("1curve %zd intersection point (%f, %f) with ray (%f, %f)\n"
+                           "in curve: (%f, %f) (%f, %f) (%f, %f) m %.9g pm %.9g\n"
+                           "quadResult %.9g a/b/c %f/%f/%f valid %d, distance: %.9g\n\n",
+                           testCounter, intersect1.x, intersect1.y, ray.x, ray.y, current.x, current.y, outside.x,
+                           outside.y, next.x, next.y, angle, previousAngle, quadResult.y, a, b, c, valid1, distance);
                 }
             }
-
-            if (valid0) previousIntersect0 = intersect0;
-            if (valid1) previousIntersect1 = intersect1;
-
-        continueBlock:
             if (testCounter == contour && ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
                 float distance1 = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
                 float distance2 = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
                 float distance = MIN(distance1, distance2);
                 printf("curve %zd intersection points (%f, %f) (%f, %f) with ray (%f, %f)\n"
-                       "in curve: (%f, %f) (%f, %f) (%f, %f) m %.9g pm %.9g\n"
+                       "in curve: (%f, %f) (%f, %f) (%f, %f) m %.9g pm %.9g angle0 %.9g angle1 %.9g\n"
                        "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n\n",
                        testCounter, intersect0.x, intersect0.y, intersect1.x, intersect1.y, ray.x, ray.y, current.x,
-                       current.y, outside.x, outside.y, next.x, next.y, angle, previousAngle, quadResult.x,
-                       quadResult.y, a, b, c, valid0, valid1, distance);
+                       current.y, outside.x, outside.y, next.x, next.y, angle, previousAngle, 2 * quadResult.x * a + b,
+                       2 * quadResult.y * a + b, quadResult.x, quadResult.y, a, b, c, valid0, valid1, distance);
             }
+
+            if (valid0) previousIntersect0 = intersect0;
+            if (valid1) previousIntersect1 = intersect1;
 
             previousAngle = angle;
         }
