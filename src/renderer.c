@@ -39,7 +39,7 @@ Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
 // t = (-b +- sqrt(b^2 - 4ac)) / 2a
 Point quadraticRoot(float a, float b, float c) {
     Point result = {NAN, NAN};
-    if (ABS(a) < 0.0001f) {
+    if (ABS(a) < 0.0002f) {
         if (b != 0) {
             result.x = -c / b;
         }
@@ -63,6 +63,7 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
     size_t i, j;
     Point current, outside, next;
     Point intersect0, intersect1, previousIntersect0 = {0}, previousIntersect1 = {0};
+    float angle, previousAngle = 1;
     size_t collisionCount = 0, testCounter = 0;
     for (i = 0; i < glyf->contourNum; i++) {
         for (j = 0; j < glyf->contours[i].length; j += 2, testCounter++) {
@@ -76,20 +77,24 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             float a = current.y + next.y - (2 * outside.y);
             float b = 2 * (outside.y - current.y);
             float c = current.y;
+            angle = 0.0001 * a + b;
             Point quadResult = quadraticRoot(a, b, c - ray.y);
-
-            // in case of a max/min? don't include that edge
-            if (quadResult.x == 0 && ABS(b) < 1e-5f) continue;
-            // in case of a (n*x - n*1)^2 that equals 1
-            if (ABS(a - (c - ray.y)) < 1e-4f && ABS(a * 2 - -b) < 1e-4f) continue;
 
             intersect0 = bezierInterpolation(current, outside, next, quadResult.x);
             intersect1 = bezierInterpolation(current, outside, next, quadResult.y);
 
-            int valid0 =
-                (ALMOST_NUMBER(quadResult.x, 0) >= 0 && ALMOST_NUMBER(quadResult.x, 1) < 1) && intersect0.x > ray.x;
-            int valid1 =
-                (ALMOST_NUMBER(quadResult.y, 0) >= 0 && ALMOST_NUMBER(quadResult.y, 1) < 1) && intersect1.x > ray.x;
+            int valid0 = ALMOST_NUMBER(quadResult.x, 0) >= 0 && quadResult.x < 1 && intersect0.x > ray.x;
+            int valid1 = ALMOST_NUMBER(quadResult.y, 0) >= 0 && quadResult.y < 1 && intersect1.x > ray.x;
+
+            // in case of a max/min? we don't want them
+            if (quadResult.x == 0 && ALMOST_NUMBER(b, 0) == 0 && IS_NEGATIVE(angle) != IS_NEGATIVE(previousAngle)
+                && previousAngle != 0) {
+                goto continueBlock;
+            }
+            // in case of a (n*x - n*1)^2 that equals 1
+            if (ABS(a - (c - ray.y)) < 1e-4f && ABS(a * 2 - -b) < 1e-4f) {
+                goto continueBlock;
+            }
 
             if (valid0) {
                 float distance = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
@@ -122,20 +127,24 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                         outside.y, next.x, next.y, quadResult.y, a, b, c, distance);
                 }
             }
+
+            if (valid0) previousIntersect0 = intersect0;
+            if (valid1) previousIntersect1 = intersect1;
+
+        continueBlock:
             if (testCounter == contour && ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
                 float distance1 = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
                 float distance2 = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
                 float distance = MIN(distance1, distance2);
-                printf("curve %zd intersection points (%f, %f) (%f, %f) with ray (%f, %f) "
-                       "in curve: (%f, %f) (%f, %f) (%f, %f) "
-                       "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n",
+                printf("curve %zd intersection points (%f, %f) (%f, %f) with ray (%f, %f)\n"
+                       "in curve: (%f, %f) (%f, %f) (%f, %f) m %.9g pm %.9g\n"
+                       "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n\n",
                        testCounter, intersect0.x, intersect0.y, intersect1.x, intersect1.y, ray.x, ray.y, current.x,
-                       current.y, outside.x, outside.y, next.x, next.y, quadResult.x, quadResult.y, a, b, c, valid0,
-                       valid1, distance);
+                       current.y, outside.x, outside.y, next.x, next.y, angle, previousAngle, quadResult.x,
+                       quadResult.y, a, b, c, valid0, valid1, distance);
             }
 
-            if (valid0) previousIntersect0 = intersect0;
-            if (valid1) previousIntersect1 = intersect1;
+            previousAngle = angle;
         }
     }
     // when the amount of intersection is odd the point is inside the glyf
