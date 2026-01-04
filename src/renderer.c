@@ -63,6 +63,14 @@ float deltaD(Point p0, Point p1) {
     return dx + dy;
 }
 
+// meow curve 9 intersection points (125.568726, 28.000002) with ray (54.000000, 28.000000)
+// in curve: (187.199997, 47.200001) (164.000000, 28.000000) (125.599998, 28.000000) angle 0.015625
+// quadResult 1.0004071/0.999593318 a/b/c 19.199997/-38.400002/47.200001 valid 0/1, distance: 71.5687256
+
+// meow curve 10 intersection points (nan, nan) with ray (54.000000, 28.000000)
+// in curve: (125.599998, 28.000000) (100.800003, 28.000000) (84.000000, 33.600002) angle nan
+// quadResult 0/nan a/b/c 5.600002/0.000000/28.000000 valid 1/0, distance: nan
+
 int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
     size_t i, j, testCounter = 0;
     Point current, outside, next;
@@ -100,17 +108,34 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                 }
             }
 
-            if ((valid0 || valid1) && ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
+            if ((valid0 || valid1) && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
                 int use0 = (valid0 && valid1) ? intersect0.x < intersect1.x : valid0;
+                Point intersectSelected = use0 ? intersect0 : intersect1;
+                DrawCircle(intersectSelected.x + 50, intersectSelected.y + 50, 5, PURPLE);
+                if (click) {
+                    float distance = intersectSelected.x - ray.x;
+                    float rootUsed = use0 ? quadResult.x : quadResult.y;
+                    float angle = 2 * a * rootUsed + b;
+                    printf("curve %zd intersection points (%f, %f) with ray (%f, %f)\n"
+                           "in curve: (%f, %f) (%f, %f) (%f, %f) angle %.9g\n"
+                           "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n\n",
+                           testCounter, intersectSelected.x, intersectSelected.y, ray.x, ray.y, current.x, current.y,
+                           outside.x, outside.y, next.x, next.y, angle, quadResult.x, quadResult.y, a, b, c, valid0,
+                           valid1, distance);
+                }
+            }
+            if (testCounter == contour && ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
+                int use0 = intersect0.x < intersect1.x;
                 Point intersectSelected = use0 ? intersect0 : intersect1;
                 float distance = intersectSelected.x - ray.x;
                 float rootUsed = use0 ? quadResult.x : quadResult.y;
                 float angle = 2 * a * rootUsed + b;
-                printf("curve %zd intersection points (%f, %f) with ray (%f, %f)\n"
+                printf("meow curve %zd intersection points (%f, %f) with ray (%f, %f)\n"
                        "in curve: (%f, %f) (%f, %f) (%f, %f) angle %.9g\n"
                        "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n\n",
                        testCounter, intersectSelected.x, intersectSelected.y, ray.x, ray.y, current.x, current.y,
-                       outside.x, outside.y, next.x, next.y, angle, quadResult.x, quadResult.y, a, b, c, valid0, valid1, distance);
+                       outside.x, outside.y, next.x, next.y, angle, quadResult.x, quadResult.y, a, b, c, valid0, valid1,
+                       distance);
             }
         }
     }
