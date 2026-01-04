@@ -39,7 +39,7 @@ Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
 // t = (-b +- sqrt(b^2 - 4ac)) / 2a
 Point quadraticRoot(float a, float b, float c) {
     Point result = {NAN, NAN};
-    if (ABS(a) < 0.0002f) {
+    if (ABS(a) < 0.0001f) {
         if (b != 0) {
             result.x = -c / b;
         }
@@ -223,10 +223,14 @@ void drawChar(W_Font *font, uint8_t c, size_t px) {
     size_t hight = (uint16_t)(hight_f32 + 0.5f);
     size_t i, j;
 
+    int upScale = 800 / px;
     for (i = 0; i < hight; i++) {
         for (j = 0; j < width; j++) {
             if (isInsideGlyf(glyf, (Point){(float)j, (float)i}, scale)) {
-                DrawPixel(j + 50, i + 50, BLACK);
+                if (upScale == 1)
+                    DrawPixel(j + 50, i + 50, BLACK);
+                else
+                    DrawRectangle(j * upScale + 50, i * upScale + 50, upScale, upScale, BLACK);
             }
         }
     }
