@@ -75,8 +75,9 @@ static inline int isFlagBitSet(size_t flag, size_t index) { return ((flag >> ind
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define ABS(x) ((x < 0) ? -(x) : (x))
+#define ABS(x) (((x) < 0) ? -(x) : (x))
 #define SQR(x) ((x) * (x))
+#define ALMOST_NUMBER(x, number) (ABS((number) - (x)) < 1e-6f ? (number) : (x))
 
 #define STR2(x) #x
 #define STR(x) STR2(x)

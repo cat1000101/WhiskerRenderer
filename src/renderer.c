@@ -12,7 +12,7 @@
 #include "raylib.h"
 
 Vector2 mouse;
-size_t contour, contourNum, click;
+size_t contour, click;
 
 typedef struct {
     float x;
@@ -58,18 +58,14 @@ float deltaD(Point p0, Point p1) {
     float dy = SQR(p0.y - p1.y);
     return dx + dy;
 }
-// 1curve 4 intersection point (186.253220, 176.000015) with ray (18.000000, 176.000000)
-// in curve: (88.800003, 184.800003) (131.199997, 176.000000) (186.400009, 176.000000)
-// quadResult 0.998670 a/b/c 8.799988/-17.600006/184.800003, distance: 65666.265625
-// /* a +1
 
 int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
     size_t i, j;
     Point current, outside, next;
     Point intersect0, intersect1, previousIntersect0 = {0}, previousIntersect1 = {0};
-    size_t collisionCount = 0, contourCounter = 0;
+    size_t collisionCount = 0, testCounter = 0;
     for (i = 0; i < glyf->contourNum; i++) {
-        for (j = 0; j < glyf->contours[i].length; j += 2, contourCounter++) {
+        for (j = 0; j < glyf->contours[i].length; j += 2, testCounter++) {
             current = getAbsoluteXY(glyf, i, j, scale);
             outside = getAbsoluteXY(glyf, i, j + 1, scale);
             next = getAbsoluteXY(glyf, i, j + 2, scale);
@@ -82,14 +78,18 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             float c = current.y;
             Point quadResult = quadraticRoot(a, b, c - ray.y);
 
-            if (quadResult.x == 0 && ABS(b) < 1e-5) continue; // in case of a max/min? don't include that edge
-            if (ABS(a - (c - ray.y)) < 1e-5f && ABS(a * -2 - b) < 1e-5f) continue; // in case of a (n*x - n*1)^2 that equals 1 but precision
+            // in case of a max/min? don't include that edge
+            if (quadResult.x == 0 && ABS(b) < 1e-5f) continue;
+            // in case of a (n*x - n*1)^2 that equals 1
+            if (ABS(a - (c - ray.y)) < 1e-4f && ABS(a * 2 - -b) < 1e-4f) continue;
 
             intersect0 = bezierInterpolation(current, outside, next, quadResult.x);
             intersect1 = bezierInterpolation(current, outside, next, quadResult.y);
 
-            int valid0 = (quadResult.x >= 0 && quadResult.x < 1) && intersect0.x > ray.x;
-            int valid1 = (quadResult.y >= 0 && quadResult.y < 1) && intersect1.x > ray.x;
+            int valid0 =
+                (ALMOST_NUMBER(quadResult.x, 0) >= 0 && ALMOST_NUMBER(quadResult.x, 1) < 1) && intersect0.x > ray.x;
+            int valid1 =
+                (ALMOST_NUMBER(quadResult.y, 0) >= 0 && ALMOST_NUMBER(quadResult.y, 1) < 1) && intersect1.x > ray.x;
 
             if (valid0) {
                 float distance = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
@@ -106,8 +106,8 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                 if (click && distance > 1e-5f) {
                     printf(
                         "0curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %f a/b/c %f/%f/%f, distance: %f\n",
-                        contourCounter, intersect0.x, intersect0.y, ray.x, ray.y, current.x, current.y, outside.x,
+                        "quadResult %.9g a/b/c %f/%f/%f, distance: %.9g\n",
+                        testCounter, intersect0.x, intersect0.y, ray.x, ray.y, current.x, current.y, outside.x,
                         outside.y, next.x, next.y, quadResult.x, a, b, c, distance);
                 }
             }
@@ -117,18 +117,26 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                 if (click && distance > 1e-5f) {
                     printf(
                         "1curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %f a/b/c %f/%f/%f, distance: %f\n",
-                        contourCounter, intersect1.x, intersect1.y, ray.x, ray.y, current.x, current.y, outside.x,
+                        "quadResult %.9g a/b/c %f/%f/%f, distance: %.9g\n",
+                        testCounter, intersect1.x, intersect1.y, ray.x, ray.y, current.x, current.y, outside.x,
                         outside.y, next.x, next.y, quadResult.y, a, b, c, distance);
                 }
+            }
+            if (testCounter == contour && ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
+                float distance1 = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
+                float distance2 = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
+                float distance = MIN(distance1, distance2);
+                printf("curve %zd intersection points (%f, %f) (%f, %f) with ray (%f, %f) "
+                       "in curve: (%f, %f) (%f, %f) (%f, %f) "
+                       "quadResult %.9g/%.9g a/b/c %f/%f/%f valid %d/%d, distance: %.9g\n",
+                       testCounter, intersect0.x, intersect0.y, intersect1.x, intersect1.y, ray.x, ray.y, current.x,
+                       current.y, outside.x, outside.y, next.x, next.y, quadResult.x, quadResult.y, a, b, c, valid0,
+                       valid1, distance);
             }
 
             if (valid0) previousIntersect0 = intersect0;
             if (valid1) previousIntersect1 = intersect1;
         }
-    }
-    if (ray.x == mouse.x - 50 && ray.y == mouse.y - 50 && click) {
-        printf("collision amount: %zd\n", collisionCount);
     }
     // when the amount of intersection is odd the point is inside the glyf
     return (collisionCount % 2) == 1;
@@ -144,9 +152,6 @@ void drawCurve(Point p0, Point p1, Point p2, float thickness, Color color) {
         // DrawLine(previous.x + 50, previous.y + 50, next.x + 50, next.y + 50, color);
         DrawLineEx((Vector2){previous.x + 50, previous.y + 50}, (Vector2){next.x + 50, next.y + 50}, thickness, color);
         previous = next;
-    }
-    if (click && thickness == 10) {
-        printf("curve %zd (%f, %f) (%f, %f) (%f, %f)\n", contour, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
     }
 }
 
@@ -217,8 +222,9 @@ void drawChar(W_Font *font, uint8_t c, size_t px) {
         }
     }
 
-    for (i = 0; i < glyf->contourNum; i++) {
-        for (j = 0; j < glyf->contours[i].length; j += 2) {
+    size_t testCounter;
+    for (i = 0, testCounter = 0; i < glyf->contourNum; i++) {
+        for (j = 0; j < glyf->contours[i].length; j += 2, testCounter++) {
             Point current = getAbsoluteXY(glyf, i, j, scale);
             Point outside = getAbsoluteXY(glyf, i, j + 1, scale);
             Point next = getAbsoluteXY(glyf, i, j + 2, scale);
@@ -226,16 +232,14 @@ void drawChar(W_Font *font, uint8_t c, size_t px) {
             DrawCircle(current.x + 50, current.y + 50, 3, RED);
             DrawCircle(outside.x + 50, outside.y + 50, 2, PINK);
 
-            if (contourNum == contour) {
+            if (testCounter == contour) {
                 drawCurve(current, outside, next, 10, GREEN);
             } else {
                 drawCurve(current, outside, next, 1, SKYBLUE);
             }
             DrawLine(mouse.x, mouse.y, 2000, mouse.y, GREEN);
-            contourNum++;
         }
     }
-    contourNum = 0;
 }
 
 int drawString_i(W_Font *font, char *character) {
