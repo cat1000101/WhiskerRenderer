@@ -83,8 +83,8 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             intersect0 = bezierInterpolation(current, outside, next, quadResult.x);
             intersect1 = bezierInterpolation(current, outside, next, quadResult.y);
 
-            int valid0 = ALMOST_NUMBER(quadResult.x, 0) >= 0 && quadResult.x < 1 && intersect0.x > ray.x;
-            int valid1 = ALMOST_NUMBER(quadResult.y, 0) >= 0 && quadResult.y < 1 && intersect1.x > ray.x;
+            int valid0 = ALMOST_NUMBER(quadResult.x, 0) >= 0 && quadResult.x <= 1 && intersect0.x > ray.x;
+            int valid1 = ALMOST_NUMBER(quadResult.y, 0) >= 0 && quadResult.y <= 1 && intersect1.x > ray.x;
 
             // in case of a max/min? we don't want them
             if (quadResult.x == 0 && ALMOST_NUMBER(b, 0) == 0 && IS_NEGATIVE(angle) != IS_NEGATIVE(previousAngle)
