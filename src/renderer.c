@@ -39,12 +39,12 @@ Point bezierInterpolation(Point p0, Point p1, Point p2, float t) {
 // t = (-b +- sqrt(b^2 - 4ac)) / 2a
 Point quadraticRoot(float a, float b, float c) {
     Point result = {NAN, NAN};
-    if (ABS(a) < 0.0001) {
+    if (ABS(a) < 0.0001f) {
         if (b != 0) {
             result.x = -c / b;
         }
     } else {
-        float sqrtPortion = (b * b) - (4 * a * c);
+        float sqrtPortion = (b * b) - (4.0f * a * c);
         if (sqrtPortion >= 0) {
             result.x = (-b + sqrt(sqrtPortion)) / (2 * a);
             result.y = (-b - sqrt(sqrtPortion)) / (2 * a);
@@ -58,31 +58,16 @@ float deltaD(Point p0, Point p1) {
     float dy = SQR(p0.y - p1.y);
     return dx + dy;
 }
-// intersection point (186.253220, 176.000015) with ray (14.000000, 176.000000) in curve: (88.800003, 184.800003) (131.199997, 176.000000) (186.400009, 176.000000)
-// intersection point (231.199997, 176.000000) with ray (14.000000, 176.000000) in curve: (231.199997, 176.000000) (231.199997, 164.800003) (231.199997, 153.600006)
-// intersection point (259.199982, 175.999985) with ray (14.000000, 176.000000) in curve: (259.200012, 153.600006) (259.200012, 260.800018) (259.200012, 368.000000)
-// curve 4 (88.800003, 184.800003) (131.199997, 176.000000) (186.400009, 176.000000) quadResult 0.998670 a/b/c 8.799988/-17.600006/184.800003
-// curve 6 (231.199997, 176.000000) (231.199997, 164.800003) (231.199997, 153.600006) quadResult 0.000000 a/b/c 0.000000/-22.399994/176.000000
-// curve 21 (259.200012, 153.600006) (259.200012, 260.800018) (259.200012, 368.000000) valid a/b/c -0.000061/214.400024/153.
-
-// curve 13 (42.400002, 49.600002) (36.000000, 49.600002) (32.000000, 44.000000)
-// curve 14 (32.000000, 44.000000) (28.000000, 37.600002) (28.000000, 33.600002)
-// y = 44   \* a -1
-
-// curve 9 (0.000000, 144.000000) (0.000000, 104.000000) (19.200001, 72.000000)
-// curve 10 (19.200001, 72.000000) (39.200001, 39.200001) (72.000000, 20.000000)
-// y = 72   /* q -1
-
-// curve 11 (72.000000, 20.000000) (104.800003, 0.000000) (144.000000, 0.000000)
-// curve 12 (144.000000, 0.000000) (184.000000, 0.000000) (211.199997, 19.200001) *
-// y = 0 _* +1
-// t = 0.5 t' = -,+ t = 0 t' = 0 quadResult = 0: continue
-// 2at + b
+// 1curve 4 intersection point (186.253220, 176.000015) with ray (18.000000, 176.000000)
+// in curve: (88.800003, 184.800003) (131.199997, 176.000000) (186.400009, 176.000000)
+// quadResult 0.998670 a/b/c 8.799988/-17.600006/184.800003, distance: 65666.265625
+// /* a +1
 
 int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
-    size_t i, j, contourCounter = 0;
-    Point current, outside, next, intersect0, intersect1, previousIntersect0 = {0}, previousIntersect1 = {0};
-    size_t collisionCount = 0;
+    size_t i, j;
+    Point current, outside, next;
+    Point intersect0, intersect1, previousIntersect0 = {0}, previousIntersect1 = {0};
+    size_t collisionCount = 0, contourCounter = 0;
     for (i = 0; i < glyf->contourNum; i++) {
         for (j = 0; j < glyf->contours[i].length; j += 2, contourCounter++) {
             current = getAbsoluteXY(glyf, i, j, scale);
@@ -97,6 +82,9 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
             float c = current.y;
             Point quadResult = quadraticRoot(a, b, c - ray.y);
 
+            if (quadResult.x == 0 && ABS(b) < 1e-5) continue; // in case of a max/min? don't include that edge
+            if (ABS(a - (c - ray.y)) < 1e-5f && ABS(a * -2 - b) < 1e-5f) continue; // in case of a (n*x - n*1)^2 that equals 1 but precision
+
             intersect0 = bezierInterpolation(current, outside, next, quadResult.x);
             intersect1 = bezierInterpolation(current, outside, next, quadResult.y);
 
@@ -105,37 +93,33 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
 
             if (valid0) {
                 float distance = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
-                if (click && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
-                    printf("0distance: %f\n", distance);
-                }
-                if (distance > 1e-5) collisionCount++;
+                if (distance > 1e-5f) collisionCount++;
             }
             if (valid1) {
                 float distance = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
-                if (click && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
-                    printf("1distance: %f\n", distance);
-                }
-                if (distance > 1e-5) collisionCount++;
+                if (distance > 1e-5f) collisionCount++;
             }
 
             if (valid0 && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
                 DrawCircle(intersect0.x + 50, intersect0.y + 50, 5, PURPLE);
-                if (click && MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1)) > 1e-5) {
+                float distance = MIN(deltaD(intersect0, previousIntersect0), deltaD(intersect0, previousIntersect1));
+                if (click && distance > 1e-5f) {
                     printf(
                         "0curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %f a/b/c %f/%f/%f\n",
+                        "quadResult %f a/b/c %f/%f/%f, distance: %f\n",
                         contourCounter, intersect0.x, intersect0.y, ray.x, ray.y, current.x, current.y, outside.x,
-                        outside.y, next.x, next.y, quadResult.x, a, b, c);
+                        outside.y, next.x, next.y, quadResult.x, a, b, c, distance);
                 }
             }
             if (valid1 && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
                 DrawCircle(intersect1.x + 50, intersect1.y + 50, 5, PURPLE);
-                if (click && MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1)) > 1e-5) {
+                float distance = MIN(deltaD(intersect1, previousIntersect0), deltaD(intersect1, previousIntersect1));
+                if (click && distance > 1e-5f) {
                     printf(
                         "1curve %zd intersection point (%f, %f) with ray (%f, %f) in curve: (%f, %f) (%f, %f) (%f, %f) "
-                        "quadResult %f a/b/c %f/%f/%f\n",
+                        "quadResult %f a/b/c %f/%f/%f, distance: %f\n",
                         contourCounter, intersect1.x, intersect1.y, ray.x, ray.y, current.x, current.y, outside.x,
-                        outside.y, next.x, next.y, quadResult.y, a, b, c);
+                        outside.y, next.x, next.y, quadResult.y, a, b, c, distance);
                 }
             }
 
