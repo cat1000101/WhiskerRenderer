@@ -51,8 +51,8 @@ Point quadraticRoot(float a, float b, float c) {
     } else {
         float sqrtPortion = (b * b) - (4.0f * a * c);
         if (sqrtPortion >= 0) {
-            result.x = (-b + sqrt(sqrtPortion)) / (2 * a);
-            result.y = (-b - sqrt(sqrtPortion)) / (2 * a);
+            result.x = (-b + sqrtf(sqrtPortion)) / (2 * a);
+            result.y = (-b - sqrtf(sqrtPortion)) / (2 * a);
             if (result.x == result.y) result.y = NAN;
         }
     }
@@ -132,13 +132,26 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
     return insideGlyf;
 }
 
+void rasterizeBezierCurve(W_Font *font, Point p0, Point p1, Point p2, uint8_t *bitmap, size_t width, size_t height) {
+    float length = sqrtf(SQR(p0.x - p1.x) + SQR(p0.y - p1.y)) + sqrtf(SQR(p2.x - p1.x) + SQR(p2.y - p1.y));
+    for (size_t i = 0; i < length; i++) {
+        float t = i / length;
+        Point p = bezierInterpolation(p0, p1, p2, t);
+        if (p.x < 0 || p.x >= width || p.y < 0 || p.y >= height) {
+            // printf("out of bound (%f, %f) box (%zd, %zd)\n", p.x, p.y, width, height);
+            continue;
+        }
+        bitmap[(size_t)(p.x) + (size_t)(p.y) * width] = 0xFF;
+    }
+}
+
 charBitmap rasterizeCharBitmap(W_Font *font, uint8_t c, size_t px) {
     SimpleGlyfChar *glyf = &font->parser->tables.glyf.chars[c];
     float scale = (float)px / (float)font->parser->tables.head.unitsPerEm;
-    uint16_t width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
-    size_t width = (uint16_t)(width_f32 + 0.5f);
-    uint16_t height_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
-    size_t height = (uint16_t)(height_f32 + 0.5f);
+    float width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
+    size_t width = (uint16_t)(width_f32 + 0.5f) + 1;
+    float height_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
+    size_t height = (uint16_t)(height_f32 + 0.5f) + 1;
     // printf("rendering '%c': scale %f width/height %f/%f min(%f, %f) max(%f, %f)\n", c, scale, width_f32, height_f32,
     // (float)glyf->boundingBox.xMin, (float)glyf->boundingBox.yMin, (float)glyf->boundingBox.xMax,
     // (float)glyf->boundingBox.yMax);
@@ -153,6 +166,18 @@ charBitmap rasterizeCharBitmap(W_Font *font, uint8_t c, size_t px) {
             }
         }
     }
+
+    // printf("size %zd %zd advance %f lsb %f\n", width, height, glyf->hMetrics.advanceWidth * scale,
+    // glyf->hMetrics.leftSideBearing * scale);
+
+    // for (i = 0; i < glyf->contourNum; i++) {
+    //     for (j = 0; j < glyf->contours[i].length; j += 2) {
+    //         Point current = getAbsoluteXY(glyf, i, j, scale);
+    //         Point outside = getAbsoluteXY(glyf, i, j + 1, scale);
+    //         Point next = getAbsoluteXY(glyf, i, j + 2, scale);
+    //         rasterizeBezierCurve(font, current, outside, next, bitmap, width, height);
+    //     }
+    // }
 
     return (charBitmap){.bitmap = bitmap,
                         .height = height,
@@ -226,9 +251,9 @@ void drawCurve(Point p0, Point p1, Point p2, float thickness, Color color) {
 void drawChar(W_Font *font, uint8_t c, size_t px) {
     SimpleGlyfChar *glyf = &font->parser->tables.glyf.chars[c];
     float scale = (float)px / (float)font->parser->tables.head.unitsPerEm;
-    uint16_t width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
+    float width_f32 = (glyf->boundingBox.xMax - glyf->boundingBox.xMin) * scale;
     size_t width = (uint16_t)(width_f32 + 0.5f);
-    uint16_t height_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
+    float height_f32 = (glyf->boundingBox.yMax - glyf->boundingBox.yMin) * scale;
     size_t height = (uint16_t)(height_f32 + 0.5f);
     size_t i, j;
 
