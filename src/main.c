@@ -1,7 +1,12 @@
+#include <fcntl.h>
 #include <stdio.h>
 
 #include "whiskerRenderer.h"
-#include "whiskerRendererTypes.h"
+
+#include "raylib.h"
+
+void usage(const char *name);
+int parseArgs(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
     int fontFile = parseArgs(argc, argv);
@@ -10,11 +15,41 @@ int main(int argc, char *argv[]) {
     MappedFile fontMapped = (MappedFile){0};
     if (!mapFile(fontFile, &fontMapped)) return 1;
 
-    W_Font *font = parseFont(fontMapped);
+    void *font = parseFont(fontMapped);
     if (!font) return 1;
-    printf("render time\n");
-    int success = drawString(font, "meow");
+
+    InitWindow(1200, 800, "testing fonts");
+    char text[256] = {0};
+    size_t pos = 0;
+    while (!WindowShouldClose()) {
+        char tmp = GetCharPressed();
+        if (tmp) {
+            text[pos++] = tmp;
+        }
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        raylibDrawString(font, text, 52, 50, 50);
+        EndDrawing();
+    }
+    CloseWindow();
 
     unmapFile(fontMapped);
-    return success;
+    return 0;
+}
+
+void usage(const char *name) { printf("usage:\n%s fontFile.ttf\n", name); }
+
+int parseArgs(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Error: Incorrect number of arguments\n");
+        usage(argv[0]);
+        return -1;
+    }
+    int fd = open(argv[1], O_RDONLY);
+    if (fd == -1) {
+        perror(argv[1]);
+        usage(argv[0]);
+        return fd;
+    }
+    return fd;
 }

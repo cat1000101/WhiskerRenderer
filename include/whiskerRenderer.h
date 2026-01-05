@@ -1,19 +1,27 @@
 #ifndef WHISKER_RENDERER_H
 #define WHISKER_RENDERER_H
 
-#include "whiskerRendererTypes.h"
-
-#define RESOLUTION 20
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
-    char *name;
-    W_Parser parser;
-} W_Font;
+    uint8_t *data;
+    size_t size;
+} MappedFile;
 
-W_Font *parseFont(MappedFile fontFile);
-int drawString(W_Font *font, char *characters);
+typedef struct {
+    uint8_t *bitmap;
+    size_t width;
+    size_t height;
+    uint16_t advanceWidth;
+    int16_t leftSideBearing;
+    int16_t verticalAdjustment;
+} charBitmap;
 
-int parseArgs(int argc, char *argv[]);
+void *parseFont(MappedFile fontFile);
+charBitmap getBitmapForChar(void *font, char c, size_t px);
+void raylibDrawString(void *font, char *s, size_t px, int posX, int posY);
+
 int mapFile(int fd, MappedFile *mappedFile);
 void unmapFile(MappedFile mf);
 

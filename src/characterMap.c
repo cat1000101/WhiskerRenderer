@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "whiskerRendererTypes.h"
 
-uint16_t getGlyphIndex(W_Parser *parser, uint16_t c) {
+uint16_t getGlyphIndex(Parser *parser, uint16_t c) {
     size_t format = ((IdentifyFormat *)parser->tables.cmap.cmapFormat)->format;
     size_t i = 0;
 
@@ -29,7 +29,7 @@ uint16_t getGlyphIndex(W_Parser *parser, uint16_t c) {
     return 0;
 }
 
-void parseCmapFormat4(W_Parser *parser, size_t formatOffset) {
+void parseCmapFormat4(Parser *parser, size_t formatOffset) {
     uint8_t *tempView = &parser->fontFile.data[formatOffset];
     CmapFormat4 *result = SAFE_MALLOC(sizeof(CmapFormat4));
     result->format = read_uint16_t_endian(&tempView[OFFSET_OF(CmapFormat4, format)]);
@@ -57,7 +57,7 @@ void parseCmapFormat4(W_Parser *parser, size_t formatOffset) {
     parser->tables.cmap.cmapFormat = result;
 }
 
-int cmapFromTD(W_Parser *parser, TableDirectory cmapTD) {
+int cmapFromTD(Parser *parser, TableDirectory cmapTD) {
     uint8_t *tempView = &parser->fontFile.data[cmapTD.offset];
     Cmap *cmapView = &parser->tables.cmap;
     CmapSubtable subtable = (CmapSubtable){0};

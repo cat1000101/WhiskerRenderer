@@ -4,10 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct {
-    uint8_t *data;
-    size_t size;
-} MappedFile;
+#include "whiskerRenderer.h"
 
 // 'cmap'	character to glyph mapping
 // 'glyf'	glyph data
@@ -107,6 +104,10 @@ typedef struct {
         int16_t xMax;
         int16_t yMax;
     } boundingBox;
+    struct {
+        uint16_t advanceWidth;
+        int16_t leftSideBearing;
+    } hMetrics;
     size_t contourNum;
     struct Contours {
         size_t length;
@@ -159,6 +160,11 @@ typedef struct {
         Hhea hhea;
         Hmtx hmtx;
     } tables;
-} W_Parser;
+} Parser;
+
+typedef struct {
+    char *name;
+    Parser *parser;
+} W_Font;
 
 #endif

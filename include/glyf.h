@@ -97,7 +97,7 @@ typedef struct {
     uint16_t argument2;
 } ComponentGlyfData;
 
-int parseGlyf(W_Parser *parser, size_t index, SimpleGlyfChar *glyfResult);
-int glyfFromTD(W_Parser *parser, TableDirectory glyfTD);
+int parseGlyf(Parser *parser, size_t index, SimpleGlyfChar *glyfResult);
+int glyfFromTD(Parser *parser, TableDirectory glyfTD);
 
 #endif

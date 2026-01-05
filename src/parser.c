@@ -1,3 +1,4 @@
+#include "parser.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -6,7 +7,7 @@
 #include "utils.h"
 #include "whiskerRendererTypes.h"
 
-void headFromTD(W_Parser *parser, TableDirectory headTD) {
+void headFromTD(Parser *parser, TableDirectory headTD) {
     Head *table = (Head *)(&parser->fontFile.data[headTD.offset]);
     Head *headView = &parser->tables.head;
 
@@ -28,7 +29,7 @@ void headFromTD(W_Parser *parser, TableDirectory headTD) {
     headView->indexToLocFormat = (int16_t)SWAP_ENDIAN_16(table->indexToLocFormat);
     headView->glyphDataFormat = (int16_t)SWAP_ENDIAN_16(table->glyphDataFormat);
 }
-void maxpFromTD(W_Parser *parser, TableDirectory maxpTD) {
+void maxpFromTD(Parser *parser, TableDirectory maxpTD) {
     Maxp *table = (Maxp *)(&parser->fontFile.data[maxpTD.offset]);
     Maxp *maxpView = &parser->tables.maxp;
 
@@ -48,7 +49,7 @@ void maxpFromTD(W_Parser *parser, TableDirectory maxpTD) {
     maxpView->maxComponentElements = SWAP_ENDIAN_16(table->maxComponentElements);
     maxpView->maxComponentDepth = SWAP_ENDIAN_16(table->maxComponentDepth);
 }
-void hheaFromTD(W_Parser *parser, TableDirectory hheaTD) {
+void hheaFromTD(Parser *parser, TableDirectory hheaTD) {
     Hhea *table = (Hhea *)(&parser->fontFile.data[hheaTD.offset]);
     Hhea *hheaView = &parser->tables.hhea;
 
@@ -70,7 +71,7 @@ void hheaFromTD(W_Parser *parser, TableDirectory hheaTD) {
     hheaView->metricDataFormat = (int16_t)SWAP_ENDIAN_16(table->metricDataFormat);
     hheaView->numOfLongHorMetrics = SWAP_ENDIAN_16(table->numOfLongHorMetrics);
 }
-int locaFromTD(W_Parser *parser, TableDirectory locaTD) {
+int locaFromTD(Parser *parser, TableDirectory locaTD) {
     uint8_t *tempView = &parser->fontFile.data[locaTD.offset];
     Loca *locaView = &parser->tables.loca;
     size_t i = 0;
@@ -91,7 +92,7 @@ int locaFromTD(W_Parser *parser, TableDirectory locaTD) {
     }
     return 0;
 }
-size_t getGlyfOffset(W_Parser *parser, size_t index) {
+size_t getGlyfOffset(Parser *parser, size_t index) {
     Loca *locaView = &parser->tables.loca;
     if (locaView->len < index) return 0;
     if (parser->tables.head.indexToLocFormat == 0) {
@@ -100,7 +101,7 @@ size_t getGlyfOffset(W_Parser *parser, size_t index) {
         return locaView->offsets.longOffsets[index];
     }
 }
-int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
+int hmtxFromTD(Parser *parser, TableDirectory hmtxTD) {
     uint8_t *tempView = &parser->fontFile.data[hmtxTD.offset];
     Hmtx *hmtxView = &parser->tables.hmtx;
     size_t i = 0;
@@ -118,6 +119,8 @@ int hmtxFromTD(W_Parser *parser, TableDirectory hmtxTD) {
     }
     return 0;
 }
+int16_t getLSB(Parser *parser, size_t index) { return parser->tables.hmtx.hMetrics[index].leftSideBearing; }
+uint16_t getAdvanceWidth(Parser *parser, size_t index) { return parser->tables.hmtx.hMetrics[index].advanceWidth; }
 
 uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     uint32_t nLongs = (numberOfBytesInTable + 3) / 4;
@@ -138,7 +141,7 @@ uint32_t calcTableChecksum(uint32_t *table, uint32_t numberOfBytesInTable) {
     return sum;
 }
 
-int getTableDirectoryAt(W_Parser *parser, size_t offset, TableDirectory *result) {
+int getTableDirectoryAt(Parser *parser, size_t offset, TableDirectory *result) {
     uint8_t *rawTable = &parser->fontFile.data[sizeof(OffsetSubTable) + offset];
 
     result->tag = *(uint32_t *)(&rawTable[0]);
@@ -161,7 +164,7 @@ int getTableDirectoryAt(W_Parser *parser, size_t offset, TableDirectory *result)
     return 0;
 }
 
-int getTableDirectory(W_Parser *parser, char *tag, TableDirectory *result) {
+int getTableDirectory(Parser *parser, char *tag, TableDirectory *result) {
     size_t offset = 0;
     TableDirectory *tables = (TableDirectory *)(&parser->fontFile.data[sizeof(OffsetSubTable)]);
 
@@ -177,7 +180,7 @@ int getTableDirectory(W_Parser *parser, char *tag, TableDirectory *result) {
     ERROR_OUT("table %s not found\n", tag);
 }
 
-int setTables(W_Parser *parser) {
+int setTables(Parser *parser) {
     TableDirectory table = {0};
 
     if (getTableDirectory(parser, "head", &table)) ERROR_OUT("unable to get required table head");
@@ -204,7 +207,7 @@ int setTables(W_Parser *parser) {
     return 0;
 }
 
-int checkFont(MappedFile fontFile, W_Parser *result) {
+int checkFont(MappedFile fontFile, Parser *result) {
     uint32_t scaler = read_uint32_t_endian(fontFile.data);
     uint16_t numTables = read_uint32_t_endian(&fontFile.data[4]);
 
@@ -223,7 +226,7 @@ int checkFont(MappedFile fontFile, W_Parser *result) {
     return 0;
 }
 
-int parseFont_i(MappedFile fontFile, W_Parser *parser) {
+int parseFont_i(MappedFile fontFile, Parser *parser) {
     printf("meow\n");
     if (checkFont(fontFile, parser)) return 1;
     if (setTables(parser)) return 1;

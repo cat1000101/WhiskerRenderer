@@ -14,7 +14,9 @@ typedef struct {
     uint16_t rangeShift;
 } OffsetSubTable;
 
-size_t getGlyfOffset(W_Parser *parser, size_t index);
-int parseFont_i(MappedFile fontFile, W_Parser *parser);
+size_t getGlyfOffset(Parser *parser, size_t index);
+int16_t getLSB(Parser *parser, size_t index);
+uint16_t getAdvanceWidth(Parser *parser, size_t index);
+int parseFont_i(MappedFile fontFile, Parser *parser);
 
 #endif

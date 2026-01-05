@@ -4,6 +4,7 @@
 
 #include "characterMap.h"
 #include "glyf.h"
+#include "parser.h"
 #include "utils.h"
 #include "whiskerRendererTypes.h"
 
@@ -32,7 +33,7 @@ size_t parseCordinateWithFlag(uint8_t *view, int16_t *coordinate, uint8_t *flags
     return (size_t)(tempView - view);
 }
 
-int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
+int parseGlyf(Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     size_t index = charValue ? getGlyphIndex(parser, (uint16_t)charValue) : 0;
     size_t glyfOffset = getGlyfOffset(parser, index);
     size_t glyfSize = getGlyfOffset(parser, index + 1) - glyfOffset;
@@ -50,6 +51,8 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     glyfResult->boundingBox.xMax = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, xMax)]);
     glyfResult->boundingBox.yMax = read_int16_t_endian(&tempView[OFFSET_OF(GlyphDescription, yMax)]);
     glyfResult->charValue = charValue;
+    glyfResult->hMetrics.advanceWidth = getAdvanceWidth(parser, index);
+    glyfResult->hMetrics.leftSideBearing = getLSB(parser, index);
     tempView += sizeof(GlyphDescription);
 
     // printf("glyf %c:contour number: %d, bounding box: (%d, %d)min (%d, %d)max sizeof glyf: %zd, index: %zd\n",
@@ -145,7 +148,7 @@ int parseGlyf(W_Parser *parser, size_t charValue, SimpleGlyfChar *glyfResult) {
     return 0;
 }
 
-int glyfFromTD(W_Parser *parser, TableDirectory glyfTD) {
+int glyfFromTD(Parser *parser, TableDirectory glyfTD) {
     parser->tables.glyf.glyfStartOffset = glyfTD.offset;
     parser->tables.glyf.chars = SAFE_MALLOC(sizeof(SimpleGlyfChar) * 256); // 256 ascii chars
     parser->tables.glyf.charNum = 256;

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "parser.h"
 #include "whiskerRendererTypes.h"
 
 typedef enum {
@@ -69,7 +68,7 @@ typedef struct {
     uint32_t offset;             // Offset of the mapping table
 } CmapSubtable;
 
-uint16_t getGlyphIndex(W_Parser *parser, uint16_t c);
-int cmapFromTD(W_Parser *parser, TableDirectory cmapTD);
+uint16_t getGlyphIndex(Parser *parser, uint16_t c);
+int cmapFromTD(Parser *parser, TableDirectory cmapTD);
 
 #endif
