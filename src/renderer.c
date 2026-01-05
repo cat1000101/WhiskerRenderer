@@ -137,6 +137,7 @@ void rasterizeBezierCurve(W_Font *font, Point p0, Point p1, Point p2, uint8_t *b
     for (size_t i = 0; i < length; i++) {
         float t = i / length;
         Point p = bezierInterpolation(p0, p1, p2, t);
+        p.x = p.x + 0.5f;
         if (p.x < 0 || p.x >= width || p.y < 0 || p.y >= height) {
             // printf("out of bound (%f, %f) box (%zd, %zd)\n", p.x, p.y, width, height);
             continue;
@@ -170,14 +171,15 @@ charBitmap rasterizeCharBitmap(W_Font *font, uint8_t c, size_t px) {
     // printf("size %zd %zd advance %f lsb %f\n", width, height, glyf->hMetrics.advanceWidth * scale,
     // glyf->hMetrics.leftSideBearing * scale);
 
-    // for (i = 0; i < glyf->contourNum; i++) {
-    //     for (j = 0; j < glyf->contours[i].length; j += 2) {
-    //         Point current = getAbsoluteXY(glyf, i, j, scale);
-    //         Point outside = getAbsoluteXY(glyf, i, j + 1, scale);
-    //         Point next = getAbsoluteXY(glyf, i, j + 2, scale);
-    //         rasterizeBezierCurve(font, current, outside, next, bitmap, width, height);
-    //     }
-    // }
+    // i am not sure if this is good or not made it draw to the ceil so better
+    for (i = 0; i < glyf->contourNum; i++) {
+        for (j = 0; j < glyf->contours[i].length; j += 2) {
+            Point current = getAbsoluteXY(glyf, i, j, scale);
+            Point outside = getAbsoluteXY(glyf, i, j + 1, scale);
+            Point next = getAbsoluteXY(glyf, i, j + 2, scale);
+            rasterizeBezierCurve(font, current, outside, next, bitmap, width, height);
+        }
+    }
 
     return (charBitmap){.bitmap = bitmap,
                         .height = height,
