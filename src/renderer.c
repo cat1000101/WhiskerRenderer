@@ -11,9 +11,9 @@
 
 #include "raylib.h"
 
-#define DEBUG_THINGY
+#define DEBUG_THINGY 0
 
-#ifdef DEBUG_THINGY
+#if DEBUG_THINGY
 Vector2 mouse;
 size_t contour, click;
 #endif
@@ -96,7 +96,7 @@ int isInsideGlyf(SimpleGlyfChar *glyf, Point ray, float scale) {
                 }
             }
 
-#ifdef DEBUG_THINGY
+#if DEBUG_THINGY
             if ((valid0 || valid1) && ray.x == mouse.x - 50 && ray.y == mouse.y - 50) {
                 int use0 = (valid0 && valid1) ? intersect0.x < intersect1.x : valid0;
                 Point intersectSelected = use0 ? intersect0 : intersect1;
@@ -235,7 +235,7 @@ void raylibDrawString(void *font, char *s, size_t px, int posX, int posY) {
     }
 }
 
-#ifdef DEBUG_THINGY
+#if DEBUG_THINGY
 #define RESOLUTION 20
 void drawCurve(Point p0, Point p1, Point p2, float thickness, Color color) {
     Point previous = p0;
